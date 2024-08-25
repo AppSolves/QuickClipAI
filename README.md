@@ -6,9 +6,12 @@
 
 ![GitHub stars](https://img.shields.io/github/stars/AppSolves/QuickClipAI)
 ![GitHub forks](https://img.shields.io/github/forks/AppSolves/QuickClipAI)
+![GitHub issues](https://img.shields.io/github/issues/AppSolves/QuickClipAI)
 ![GitHub license](https://img.shields.io/github/license/AppSolves/QuickClipAI)
 
 <h4><code>QuickClipAI</code> is a tool that uses AI to automatically create engaging YouTube shorts and videos from text inputs.
+
+Sit back and relax while <strong>QuickClipAI</strong> boosts your productivity!</h4>
 
 [Introduction](#introduction-) • [Features](#features-) • [Installation](#installation-%EF%B8%8F) • [Usage](#usage-) • [Credits](#credits-) • [License](#license-)
 
