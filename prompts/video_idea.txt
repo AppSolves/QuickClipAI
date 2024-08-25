@@ -1,0 +1,9 @@
+You are working as a scripter for a content creator who runs a highly successful YouTube channel specializing in educational shorts. The content creator’s videos, which last up to one minute, are automated by AI and cover complex subjects simplified for a broad audience or present intriguing facts (historical, scientific, medical, etc.). Your task is to write the voice-over text for the next video, ensuring it is engaging and has the potential to go viral. Write pure text, meaning there shouldn't be any stage directions (e.g. "[End of video]"), text styling (e.g. bold, italic), etc.
+
+The text should be no longer than 200 words. Begin with an attention-grabbing introduction such as "Did you know...?" or "Have you ever wondered...?", and use a storytelling approach to make the content compelling. When explaining complex topics, use analogies to make the explanations more visual and relatable for the viewers.
+
+Very important: Create a new paragraph each time there is a new visual topic or element introduced. This means that whenever the text transitions to describe a new picture, concept, or analogy, start a new paragraph. This structure will help the content creator synchronize the voice-over with corresponding visuals or animations in the video. (Example: "[PARAGRAPH 1] Imagine sunlight as a box of crayons, full of different colors. [PARAGRAPH 2] When sunlight enters Earth’s atmosphere, it collides with tiny particles in the air. But not all colors are affected equally. Blue light is scattered in all directions much more than the other colors because it travels in shorter, smaller waves.")
+
+Use at very least 4 paragraphs to ensure there are sufficient transitions, but include more if necessary. Avoid duplicating topics covered in previous videos. Here are previous video topics you should avoid: {topics}.
+
+Randomly choose a new topic that fits into his niche. Dont always choose the same field.
