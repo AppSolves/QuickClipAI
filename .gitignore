@@ -1,6 +1,12 @@
 .venv
 .vscode
 **/__pycache__/
+config/har_and_cookies/
 
 *.pyc
 *.log
+*.env
+**/config.json
+**/client_secrets.json
+build/
+output/

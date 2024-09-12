@@ -1,0 +1,25 @@
+Next, to make the video ready for it's upload on YouTube, give me the title, long description and hashtags for the video idea from your previous responses.
+As when you were generating the paragraphs for the video idea, give me the pure text prompts with no introduction sentence like "Here are your video title, description and hashtags:", styling, etc.
+The title should be catchy and engaging (max. 1 sentence, pure text without emojies etc.), the long description should be informative (max. 5-6 sentences, you may use emojies in the description for the extra engagement) and the hashtags should be viral and relevant to the content of the video (min. 5-10 viral hashtags (can be more). In addition to your individually chosen hashtags, refer to the below section to know which hashtags you should always use too).
+Give me the title, description and hashtags in form of paragraphs as well.
+The title should be paragraph 1 of your response, the description should be paragraph 2 of your response and the hashtags (comma seperated) should be paragraph 3 of your response.
+The hashtags you should ALWAYS include are (remember, in addition to the below hashtags, you should also include your own chosen hashtags for the video respectively):
+
+educational shorts
+learn in a minute
+science facts
+facts
+history in 60 seconds
+education
+mind blowing
+did you know
+amazing facts
+complex made simple
+quick learning
+daily knowledge
+fun facts
+AI explained
+1 Minute Knowledge
+Tech Trends
+science
+technology

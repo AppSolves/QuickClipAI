@@ -6,23 +6,29 @@ from config.config import SettingsManager, Singleton
 @Singleton
 class PromptManager:
     def __init__(self):
+        self.__settings_manager__ = SettingsManager()
+        self.__prompts_dir__ = os.path.join(
+            self.__settings_manager__.root_dir,
+            "prompts",
+        )
         self.reinit()
 
     def reinit(self):
         self.__initialized__ = False
-        topics = SettingsManager().get("past_topics", [])
-        for root, _, files in os.walk("prompts"):
+        topics = self.__settings_manager__.get("past_topics", [])
+        for root, _, files in os.walk(self.__prompts_dir__):
             for file in files:
                 with open(os.path.join(root, file), "r") as f:
                     prompt_name = os.path.splitext(file)[0]
-                    prompt_content = (
-                        f.read().format(
+                    content = f.read()
+                    prompt = (
+                        content.format(
                             topics=topics,
                         )
-                        if prompt_name == "video_idea"
-                        else f.read()
+                        if r"{topics}" in content
+                        else content
                     )
-                    setattr(self, prompt_name, prompt_content)
+                    setattr(self, prompt_name, prompt)
         self.__initialized__ = True
 
     def get_prompt(self, prompt_name: str) -> str:
