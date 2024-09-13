@@ -8,14 +8,14 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from elevenlabs import VoiceSettings, save
 from elevenlabs.client import DEFAULT_VOICE, ElevenLabs
 
-from config.config import SettingsManager, Singleton
+from config.config import SessionID, SettingsManager, Singleton
 
 
 @Singleton
 class ElevenLabsAPI:
     def __init__(self, verbose: bool = False) -> None:
         self.__verbose__ = verbose
-        self.__settings_manager__ = SettingsManager()
+        self.__settings_manager__ = SettingsManager(session_id=SessionID.NONE)
         api_key = self.__settings_manager__.get(
             "elevenlabs_api_key",
             self.__settings_manager__.get("ELEVENLABS_API_KEY", None),

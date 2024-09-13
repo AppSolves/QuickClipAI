@@ -13,7 +13,7 @@ from g4f.cookies import read_cookie_files, set_cookies_dir
 from g4f.errors import MissingAuthError, RateLimitError
 from g4f.requests.raise_for_status import CloudflareError
 
-from config.config import SettingsManager, Singleton
+from config.config import SessionID, SettingsManager, Singleton, classproperty
 
 
 class MessageSender(Enum):
@@ -59,7 +59,7 @@ class G4FAPI:
     ) -> None:
         g4f.debug.logging = verbose
         self.__verbose__ = verbose
-        self.__settings_manager__ = SettingsManager()
+        self.__settings_manager__ = SettingsManager(session_id=SessionID.NONE)
         cookies_dir = os.path.join(
             self.__settings_manager__.root_dir, "config", "har_and_cookies"
         )

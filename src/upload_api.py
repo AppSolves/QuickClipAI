@@ -22,7 +22,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from config.config import SettingsManager, Singleton, classproperty
+from config.config import SessionID, SettingsManager, Singleton, classproperty
 
 RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 MAX_RETRIES = 10
@@ -32,7 +32,7 @@ httplib2.RETRIES = 1
 class UploadAPI:
     def __init__(self, verbose: bool = False):
         self.__verbose__ = verbose
-        self.__settings_manager__ = SettingsManager()
+        self.__settings_manager__ = SettingsManager(session_id=SessionID.NONE)
 
     @classproperty
     def authenticated_service(cls):
@@ -40,7 +40,7 @@ class UploadAPI:
             "https://www.googleapis.com/auth/youtube",
             "https://www.googleapis.com/auth/youtube.upload",
         ]
-        settings_manager = SettingsManager()
+        settings_manager = SettingsManager(session_id=SessionID.NONE)
 
         credentials = None
         if settings_manager.get("youtube_auth_session", None):
@@ -269,7 +269,10 @@ class UploadAPI:
                 instagram_description = f"{info.get('title')}\n\n{info.get('description')}\n\n{info.get('album')}"
                 pc.copy(instagram_description)
                 description_elem = driver.find_element(By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.x15wfb8v.x3aagtl.x6ql1ns.x78zum5.xdl72j9.x1iyjqo2.xs83m0k.x13vbajr.x1ue5u6n > div.xhk4uv.x26u7qi.xy80clv.x9f619.x78zum5.x1n2onr6.x1f4304s > div > div > div > div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.x12lumcd.xdt5ytf.xln7xf2.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x6ikm8r.x1odjw0f.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.x11njtxf > div:nth-child(2) > div > div.x6s0dn4.x78zum5.x1n2onr6.xh8yej3 > div.xw2csxc.x1odjw0f.x1n2onr6.x1hnll1o.xpqswwc.xl565be.x5dp1im.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x1w2wdq1.xen30ot.x1swvt13.x1pi30zi.xh8yej3.x5n08af.notranslate")
+                description_elem.click()
+                time.sleep(0.5)
                 description_elem.send_keys(Keys.CONTROL, "v")
+                time.sleep(0.5)
                 driver.find_element(By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div._ac7b._ac7d > div > div").click()
                 try:
                     wait = WebDriverWait(driver, timeout=30, poll_frequency=.2, ignored_exceptions=errors)

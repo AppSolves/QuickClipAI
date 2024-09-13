@@ -1,12 +1,12 @@
 import os
 
-from config.config import SettingsManager, Singleton
+from config.config import SessionID, SettingsManager, Singleton
 
 
 @Singleton
 class PromptManager:
     def __init__(self):
-        self.__settings_manager__ = SettingsManager()
+        self.__settings_manager__ = SettingsManager(session_id=SessionID.NONE)
         self.__prompts_dir__ = os.path.join(
             self.__settings_manager__.root_dir,
             "prompts",

@@ -18,7 +18,7 @@ from moviepy.video.fx.resize import resize
 from selenium.common.exceptions import NoSuchDriverException
 from selenium.webdriver.common.by import By
 
-from config.config import SettingsManager, Singleton
+from config.config import SessionID, SettingsManager, Singleton
 
 
 class SubtitleOptions:
@@ -62,7 +62,7 @@ class BackgroundMusic:
         credits: str | None = None,
     ):
         if not audio_path:
-            settings_manager = SettingsManager()
+            settings_manager = SettingsManager(session_id=SessionID.NONE)
             audio_assets = os.path.join(settings_manager.assets_dir, "project", "music")
             try:
                 audio_path = rd.choice(
@@ -102,7 +102,7 @@ class BensoundBackgroundMusic(BackgroundMusic):
     def __init__(self, track_name: str, start_sec: float = 0, volume_factor: float = 1):
         search_params = "".join([f"&tag[]={key}" for key in track_name.split(" ")])
         url = f"https://www.bensound.com/royalty-free-music?type=free&sort=relevance{search_params}"
-        settings_manager = SettingsManager(temp=True)
+        settings_manager = SettingsManager(session_id=SessionID.TEMP)
         self.bensound_dir = os.path.join(settings_manager.build_dir, "bensound")
         os.makedirs(self.bensound_dir, exist_ok=True)
 
@@ -135,6 +135,8 @@ class BensoundBackgroundMusic(BackgroundMusic):
             "/html/body/div[6]/div[2]/div/div[4]/div[2]/div[2]/div/div[6]/div[2]/div[3]/img",
         ).click()
         credit = pc.paste()
+        if not credit:
+            raise ValueError("Failed to get credit for Bensound track!")
 
         while not os.listdir(self.bensound_dir):
             time.sleep(1)
@@ -275,7 +277,7 @@ class AudioBitrate(Enum):
 class MoviepyAPI:
     def __init__(self, verbose: bool = False) -> None:
         self.__verbose__ = verbose
-        self.__settings_manager__ = SettingsManager()
+        self.__settings_manager__ = SettingsManager(session_id=SessionID.NONE)
         os.makedirs(self.build_dir, exist_ok=True)
 
     @property
@@ -574,7 +576,7 @@ class MoviepyAPI:
             f"Copyright © {datetime.now().year} {metadata['artist']}"
         )
         metadata["date"] = str(datetime.now().year)
-        metadata["episode_id"] = SettingsManager().session_id
+        metadata["episode_id"] = SettingsManager(session_id=SessionID.NONE).session_id
         if background_music and background_music.credits:
             metadata["album"] = background_music.credits
         self.inject_metadata(final_video_path, metadata, verbose=self.__verbose__)

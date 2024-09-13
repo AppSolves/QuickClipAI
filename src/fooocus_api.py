@@ -10,14 +10,15 @@ import gradio_client as gc
 import PIL.Image as Image
 from rich import print as rprint
 
-from config.config import SettingsManager, Singleton, classproperty, timeout
+from config.config import (SessionID, SettingsManager, Singleton,
+                           classproperty, timeout)
 from src.errors import (FooocusNotFoundError, LoRaNotFoundError,
                         ModelNotFoundError)
 
 
 class Model:
     def __init__(self, name: str) -> None:
-        settings_manager = SettingsManager()
+        settings_manager = SettingsManager(session_id=SessionID.NONE)
         path = settings_manager.get("fooocus_path", None)
         if (
             not path
@@ -67,7 +68,7 @@ class Refiner(Model):
 
 class LoRa:
     def __init__(self, name: str, weight: float = 1) -> None:
-        settings_manager = SettingsManager()
+        settings_manager = SettingsManager(session_id=SessionID.NONE)
         path = settings_manager.get("fooocus_path", None)
         if (
             not path
@@ -237,12 +238,12 @@ class FooocusAPI:
 
     @property
     def output_dir(self) -> str:
-        settings_manager = SettingsManager()
+        settings_manager = SettingsManager(session_id=SessionID.NONE)
         return os.path.join(settings_manager.build_dir, "pictures")
 
     @classproperty
     def fooocus_path(cls) -> dict[str, str] | None:
-        settings_manager = SettingsManager()
+        settings_manager = SettingsManager(session_id=SessionID.NONE)
         path = settings_manager.get("fooocus_path", None)
         return path  # type: ignore
 

@@ -6,6 +6,7 @@ import sys
 import threading
 import uuid
 from base64 import urlsafe_b64encode
+from enum import Enum
 from typing import Iterable
 
 from cryptography.fernet import Fernet
@@ -82,10 +83,42 @@ def Singleton(cls):
     return __get_instance__
 
 
+class SessionID(Enum):
+    TEMP = "temp"
+    LAST = "last_session_id"
+    NONE = None
+    EXPLICIT = None
+
+    def __new__(cls, value: str | None) -> "SessionID":
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj
+
+    @classmethod
+    def explicit(cls, session_id: str) -> "SessionID":
+        explicit_member = cls.EXPLICIT
+        explicit_member._value_ = session_id
+        cls._explicit_set = True
+        return explicit_member
+
+    @property
+    def value(self):
+        if self == SessionID.EXPLICIT and not (
+            hasattr(self, "_explicit_set") or self._explicit_set
+        ):
+            raise ValueError("EXPLICIT session ID has not been set.")
+        return self._value_
+
+
 @Singleton
 class SettingsManager:
-    def __init__(self, temp: bool = False, verbose: bool = False) -> None:
-        self.__session_id__ = "temp" if temp else uuid.uuid4().hex
+    def __init__(self, session_id: SessionID, verbose: bool = False) -> None:
+        self.__session_id__ = session_id.value or uuid.uuid4().hex
+        self.__session_id__ = (
+            (self.last_session_id or self.__session_id__)
+            if self.__session_id__ == "last_session_id"
+            else self.__session_id__
+        )
         self.__verbose__ = verbose
         self.__config_file__ = os.path.join(self.root_dir, "config", "config.json")
         os.makedirs(self.build_dir, exist_ok=True)
@@ -96,6 +129,18 @@ class SettingsManager:
                 self.set("last_session_id", self.__session_id__)
 
         atexit.register(__save_session_id__)
+
+    def session_exists(self, session_id: SessionID) -> bool:
+        if session_id == SessionID.LAST:
+            session_id_str = self.last_session_id
+        else:
+            session_id_str = session_id.value
+
+        return (
+            os.path.exists(self.build_dir_for_session(session_id_str))
+            if session_id_str
+            else False
+        )
 
     @property
     def session_id(self) -> str:

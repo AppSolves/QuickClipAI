@@ -1,3 +1,4 @@
+import json
 import os
 import random as rd
 import sys
@@ -49,7 +50,7 @@ def main(
     is_verbose = verbose
 
 
-from config.config import SettingsManager
+from config.config import SessionID, SettingsManager
 from src.elevenlabs_api import ElevenLabsAPI
 from src.fooocus_api import FooocusAPI, ImageType, LoRa, Model, Resolution, UpscaleMode
 from src.g4f_api import G4FAPI, Message, MessageSender
@@ -124,7 +125,10 @@ def generate(
         ),
     ] = 16,
 ):
-    settings_manager = SettingsManager(temp=temporary, verbose=is_verbose)
+    settings_manager = SettingsManager(
+        session_id=SessionID.TEMP if temporary else SessionID.NONE,
+        verbose=is_verbose,
+    )
     typer.echo(f"Session UID: {settings_manager.session_id}")
     g4f_api = G4FAPI(verbose=is_verbose)
     elevenlabs_api = ElevenLabsAPI(verbose=is_verbose)
@@ -194,7 +198,7 @@ def generate(
         ),
         BensoundBackgroundMusic(
             "the lounge",
-            volume_factor=0.1,
+            volume_factor=0.2,
         ),
     ]
     background_music = rd.choice(background_musics)
@@ -212,7 +216,7 @@ def generate(
             Overlay(
                 r"D:\Hobbys\YouTube\CurioBurstz\Allgemein\Subscribe-Popup.mov",
                 start_sec=25,
-                size=0.520833,
+                size=0.5,
                 rel_position=("center", "top"),
                 is_transparent=True,
                 volume_factor=0.4,
@@ -240,9 +244,153 @@ def generate(
             rel_height_pos=0.3,
         ),
     )
-    past_topics = settings_manager.get("past_topics", [])
-    past_topics.append(video_title)  # type: ignore
-    settings_manager.set("past_topics", past_topics)
+    past_topics = settings_manager.get("past_topics", []) or []
+    if video_title not in past_topics:  # type: ignore
+        past_topics.append(video_title)  # type: ignore
+        settings_manager.set("past_topics", past_topics)
+
+
+@app.command(
+    name="regenerate, rebuild, continue, resume",
+    help="[purple]Form[/purple] a [italic]new[/italic] [bold cyan]beautiful[/bold cyan] video out of the current build assets. :clapper:",
+    rich_help_panel="Video: Management",
+)
+def regenerate(
+    session_id: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--session-id",
+            "-sid",
+            help="Specify the build's [purple]session ID[/purple] to use for the video regeneration (set to 'temp' for temporary mode). :id:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = None,
+    owner: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--owner",
+            "-o",
+            help="Specify the [purple]owner[/purple] of the video. :bust_in_silhouette:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = None,
+    genre: Annotated[
+        int,
+        typer.Option(
+            ...,
+            "--genre",
+            "-g",
+            help="Specify the [purple]genre[/purple] of the video. :musical_note:",
+            rich_help_panel="Options: Customization",
+        ),
+    ] = 28,
+    num_threads: Annotated[
+        int,
+        typer.Option(
+            ...,
+            "--num-threads",
+            "-nt",
+            help="Specify the [purple]number of threads[/purple] to use for video generation. :thread:",
+            show_default=True,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = 16,
+):
+    settings_manager = SettingsManager(
+        session_id=(
+            (SessionID.TEMP if session_id == "temp" else SessionID.explicit(session_id))
+            if session_id
+            else SessionID.LAST
+        ),
+        verbose=is_verbose,
+    )
+    typer.echo(f"Session UID: {settings_manager.session_id}")
+    elevenlabs_api = ElevenLabsAPI(verbose=is_verbose)
+    fooocus_api = FooocusAPI(verbose=is_verbose)
+    moviepy_api = MoviepyAPI(verbose=is_verbose)
+
+    with open(
+        os.path.join(settings_manager.build_dir, "responses", "video_info.txt"), "r"
+    ) as f:
+        video_info = [line for line in f.readlines() if line.strip()]
+    video_title, video_description, video_hashtags = tuple(
+        map(
+            lambda string: (
+                tuple(map(str.strip, string.split(",")))
+                if "#" in string
+                else string.strip()
+            ),
+            video_info,
+        )
+    )
+
+    background_musics = [
+        BackgroundMusic(
+            r"D:\Hobbys\YouTube\CurioBurstz\Assets\background_music_1.mp3",
+            volume_factor=0.1,
+            credits="\nSong: Sappheiros - Lights (Vlog No Copyright Music)\nMusic promoted by Vlog No Copyright Music.\nVideo Link: https://youtu.be/kzeQK45StRo\n",
+        ),
+        BackgroundMusic(
+            r"D:\Hobbys\YouTube\CurioBurstz\Assets\background_music_2.mp3",
+            volume_factor=0.1,
+            credits="\nSong: Chill Day - LAKEY INSPIRED\nLink: https://soundcloud.com/lakeyinspired/chill-day\nLicense: Creative Commons Attribution-ShareAlike 3.0\nLicense Link: https://creativecommons.org/licenses/by-sa/3.0/\n",
+        ),
+        BensoundBackgroundMusic(
+            "the lounge",
+            volume_factor=0.2,
+        ),
+    ]
+    background_music = rd.choice(background_musics)
+    moviepy_api.generate_video(
+        audio_paths=[
+            os.path.join(elevenlabs_api.output_dir, audio)
+            for audio in os.listdir(elevenlabs_api.output_dir)
+        ],
+        picture_paths=[
+            os.path.join(fooocus_api.output_dir, picture)
+            for picture in os.listdir(fooocus_api.output_dir)
+        ],
+        background_music=background_music,
+        overlays=[
+            Overlay(
+                r"D:\Hobbys\YouTube\CurioBurstz\Allgemein\Subscribe-Popup.mov",
+                start_sec=25,
+                size=0.5,
+                rel_position=("center", "top"),
+                is_transparent=True,
+                volume_factor=0.4,
+            )
+        ],
+        metadata={
+            "artist": owner,
+            "title": video_title,
+            "description": video_description,  # type: ignore
+            "comment": list(video_hashtags),
+            "genre": str(genre),
+        },
+        max_length=59,
+        num_threads=num_threads,
+        subtitle_options=SubtitleOptions(
+            highlight_color=["yellow", "cyan"],
+            font_path=os.path.join(
+                settings_manager.assets_dir,
+                "project",
+                "fonts",
+                "TheBoldFont.ttf",
+            ),
+            font_size=90,
+            stroke_width=10,
+            rel_height_pos=0.3,
+        ),
+    )
+    past_topics = settings_manager.get("past_topics", []) or []
+    if video_title not in past_topics:  # type: ignore
+        past_topics.append(video_title)  # type: ignore
+        settings_manager.set("past_topics", past_topics)
 
 
 @app.command(
@@ -257,7 +405,7 @@ def upload(
             ...,
             "--session-id",
             "-sid",
-            help="Specify the video's [purple]session ID[/purple] to use for the video upload. :id:",
+            help="Specify the video's [purple]session ID[/purple] to use for the video upload (set to 'temp' for temporary mode). :id:",
             show_default=False,
             rich_help_panel="Options: Configuration",
         ),
@@ -312,10 +460,12 @@ def upload(
         typer.echo("The thumbnail path does not exist.")
         raise typer.Exit(code=1)
 
-    settings_manager = SettingsManager(temp=True, verbose=is_verbose)
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
     upload_api = UploadAPI(verbose=is_verbose)
     session_id = session_id or settings_manager.last_session_id
-    if session_id is None:
+    if not session_id or not settings_manager.session_exists(
+        SessionID.explicit(session_id)
+    ):
         typer.echo(
             "No session ID found. Please provide a session ID to upload the video."
         )
@@ -340,15 +490,17 @@ def inspect(
             ...,
             "--session-id",
             "-sid",
-            help="Specify the video's [purple]session ID[/purple] to use for the video inspection. :id:",
+            help="Specify the video's [purple]session ID[/purple] to use for the video inspection (set to 'temp' for temporary mode). :id:",
             show_default=False,
             rich_help_panel="Options: Configuration",
         ),
     ] = None,
 ):
-    settings_manager = SettingsManager(temp=True, verbose=is_verbose)
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
     session_id = session_id or settings_manager.last_session_id
-    if session_id is None:
+    if not session_id or not settings_manager.session_exists(
+        SessionID.explicit(session_id)
+    ):
         typer.echo(
             "No session ID found. Please provide a session ID to inspect the video."
         )
@@ -357,7 +509,7 @@ def inspect(
     moviepy_api = MoviepyAPI(verbose=is_verbose)
     video_path = moviepy_api.get_video_path(session_id)
     metadata = moviepy_api.get_metadata(video_path)
-    typer.echo(metadata)
+    typer.echo(json.dumps(metadata, indent=4))
 
 
 if __name__ == "__main__":
