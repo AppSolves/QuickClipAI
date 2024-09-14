@@ -542,9 +542,30 @@ def hashtags(
         ),
     ],
 ):
+    always_include = (
+        "#aiexplained",
+        "#ai",
+        "#simplifiedscience",
+        "#quickfacts",
+        "#learnin60seconds",
+        "#knowledgenuggets",
+        "#mindblown",
+        "#didyouknow",
+        "#funfacts",
+        "#brainboost",
+        "#dailylearning",
+        "#techexplained",
+        "#smartshorts",
+        "#curiosity",
+        "#learneveryday",
+        "#factcheck",
+        "#viral",
+        "#trending",
+    )
     hashtags = tuple(
         map(lambda keyword: f"#{keyword.strip()}", keywords.strip().split(","))
     )
+    hashtags = tuple(set(hashtags + always_include))
     typer.echo(f'\n{" ".join(hashtags)}')
 
 
