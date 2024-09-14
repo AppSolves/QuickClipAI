@@ -238,6 +238,7 @@ class UploadAPI:
 
                 options = selenium.webdriver.ChromeOptions()
                 options.add_argument("--headless")
+                options.add_argument("--log-level=3")
                 options.add_argument("user-data-dir=C:\\Users\\AppSolves\\AppData\\Local\\Google\\Chrome\\User Data")
                 options.add_experimental_option("excludeSwitches", ["enable-logging"])
                 options.add_argument("--disable-search-engine-choice-screen")
@@ -307,6 +308,7 @@ class UploadAPI:
             #         thumbnail_path = Path(default_thumbnail_path) if default_thumbnail_path else None
 
             #     options = selenium.webdriver.ChromeOptions()
+            #     options.add_argument("--log-level=3")
             #     options.add_argument("--headless")
             #     options.add_argument("user-data-dir=C:\\Users\\AppSolves\\AppData\\Local\\Google\\Chrome\\User Data")
             #     options.add_experimental_option("excludeSwitches", ["enable-logging"])

@@ -11,6 +11,7 @@ import ffmpeg
 import moviepy.editor as mp
 import selenium
 import selenium.webdriver
+from moviepy.audio.fx.audio_fadeout import audio_fadeout
 from moviepy.audio.fx.volumex import volumex
 from moviepy.video.fx.crop import crop
 from moviepy.video.fx.resize import resize
@@ -476,7 +477,7 @@ class MoviepyAPI:
         clips = []
         total_duration = 0
         for audio_path, picture_path in zip(audio_paths, picture_paths):
-            audio = mp.AudioFileClip(audio_path)
+            audio = audio_fadeout(mp.AudioFileClip(audio_path), 0.5)
             picture = mp.ImageClip(picture_path)
             picture = picture_motion(
                 picture,
