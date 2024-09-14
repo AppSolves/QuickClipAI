@@ -542,7 +542,9 @@ def hashtags(
         ),
     ],
 ):
-    hashtags = tuple(map(lambda keyword: f"#{keyword}", keywords.split(",")))
+    hashtags = tuple(
+        map(lambda keyword: f"#{keyword.strip()}", keywords.strip().split(","))
+    )
     typer.echo(f'\n{" ".join(hashtags)}')
 
 
