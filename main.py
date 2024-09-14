@@ -514,5 +514,37 @@ def inspect(
     typer.echo(json.dumps(metadata, indent=4))
 
 
+@app.command(
+    name="list, show",
+    help="[purple]List[/purple] the [bold cyan]beautiful[/bold cyan] video topics. :scroll:",
+    rich_help_panel="Video: Management",
+)
+def list_topics():
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    past_topics = settings_manager.get("past_topics", []) or []
+    for index, topic in enumerate(past_topics):
+        typer.echo(f"{index + 1}. {topic}")
+
+
+@app.command(
+    name="hashtags",
+    help="[purple]Generate[/purple] [bold cyan]beautiful[/bold cyan] video hashtags from comma separated keywords. :hash:",
+    rich_help_panel="Video: Configuration",
+)
+def hashtags(
+    keywords: Annotated[
+        str,
+        typer.Argument(
+            ...,
+            help="Specify the [italic]comma separated[/italic] [purple]keywords[/purple] to generate hashtags from. :hash:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ],
+):
+    hashtags = tuple(map(lambda keyword: f"#{keyword}", keywords.split(",")))
+    typer.echo(f'\n{" ".join(hashtags)}')
+
+
 if __name__ == "__main__":
     app()
