@@ -71,6 +71,8 @@ settings_manager.set(
 
 5. **Install `ImageMagick`**: Download and install `ImageMagick` from the [official website](https://imagemagick.org/script/download.php) as well. Make sure to tick both boxes that add the binary to your system's `PATH` variable and install the legacy utilities.
 
+6. **Install `Chrome`**: `Chrome` and `ChromeDriver` are necessary if you would like to use background music from [Bensound](https://www.bensound.com) (refer to the `BensoundBackgroundMusic` class) or make automatic uploads to [Instagram](https://instagram.com). Make sure to download the latest version of [Chrome](https://www.google.com/chrome/) and the [ChromeDriver](https://googlechromelabs.github.io/chrome-for-testing/#stable) respectively. Make sure to add the `ChromeDriver` binary to your system's `PATH` variable.
+
 ### Providers and API setup 🌐
 1. You need to obtain an API key from [ElevenLabs](https://elevenlabs.io) (they have a free plan) to be able to generate automatic voiceovers. You can set this key in the same `.env` file as above by adding the `ELEVENLABS_API_KEY` key or by setting it using the `SettingsManager` class:
 
@@ -99,7 +101,7 @@ Source: Official [gpt4free](https://github.com/xtekky/gpt4free#har-file-for-open
 > 5. Initiate an action in the chat which can be captured in the .har file.
 > 6. Right-click any of the network activities listed and select "Save all as HAR with content" to export the .har file.
 
-In order to make use of the automatic upload features, you need to add your YouTube, Instagram and TikTok credentials to the `config/config.json` file using the `SettingsManager` class. The `UploadAPI` class will automatically use these credentials to upload the generated video to the respective platforms:
+In order to make use of the automatic upload features, you need to add your YouTube credentials to the `config/config.json` file using the `SettingsManager` class. The `UploadAPI` class will automatically use these credentials to upload the generated video to the respective platform:
 
 ```python
 # You SHOULD remove these lines after executing the script once.
@@ -127,7 +129,7 @@ settings_manager.set(
 > ⚠️ **IMPORTANT**: For Instagram, you only have to be logged in to the respective platform in your chrome browser. TikTok is currently not supported yet due to the lack of an official API.
 
 Follow these guides to setup the publisher credentials:
-- [YouTube](https://developers.google.com/youtube/v3/guides/uploading_a_video)
+- Set up a Google Cloud Project for [YouTube](https://developers.google.com/youtube/v3/guides/uploading_a_video)
 
 ## Customization 🎨
 
@@ -177,17 +179,21 @@ If you would like to use encryption features for the storage of configuration fi
 ENCRYPTION_KEY=your_encryption_key
 ```
 
-### Upload to YouTube, Instagram, and TikTok 📤
+### Upload to YouTube and Instagram 📤
 
-You can easily upload your generated videos to YouTube, Instagram, and TikTok automatically using the `UploadAPI` class. You can set the `youtube` parameter to `True` to upload the video to YouTube, and the `instagram` and `tiktok` parameters to `True` to upload the video to Instagram and TikTok respectively. Follow [this](https://developers.google.com/youtube/v3/guides/uploading_a_video) guide to set up a Google Cloud project which is needed for automatic uploads to YouTube to work and place the `client_secrety.json` in the `config` folder. You can then use the `UploadAPI` class to upload the video:
+You can easily upload your generated videos to YouTube and Instagram automatically using the `UploadAPI` class. You can set the `youtube` parameter to `True` to upload the video to YouTube, and the `instagram` and `tiktok` parameters to `True` to upload the video to Instagram and TikTok respectively.
+
+> :information_source: **NOTE**: The `tiktok` paramater is ignored as [TikTok](https://tiktok.com) is currently not supported.
+
+You can then use the `UploadAPI` class to upload the video:
 
 ```python
 upload_api = UploadAPI()
 upload_api.upload_video(
-    session_id="...", # The session ID of the video to upload (will be displayed in the console after generating the video). The `SettingsManager` class will always store the last session ID.
+    session_id="...", # The session ID of the video to upload (will be displayed in the console after generating the video). Leave `None` to use the last session ID.
     youtube=True,
     instagram=True,
-    tiktok=True,
+    tiktok=True, # Currently not supported
 )
 ```
 

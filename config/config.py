@@ -1,6 +1,7 @@
 import atexit
 import json
 import os
+import platform
 import shutil
 import sys
 import threading
@@ -220,6 +221,28 @@ class SettingsManager:
             "build",
             self.__session_id__,
         )
+
+    @classproperty
+    def chrome_profile_dir(cls) -> str:
+        user_home = os.path.expanduser("~")
+
+        if platform.system() == "Windows":
+            profile_path = os.path.join(
+                user_home, "AppData", "Local", "Google", "Chrome", "User Data"
+            )
+        elif platform.system() == "Darwin":
+            profile_path = os.path.join(
+                user_home, "Library", "Application Support", "Google", "Chrome"
+            )
+        elif platform.system() == "Linux":
+            profile_path = os.path.join(user_home, ".config", "google-chrome")
+        else:
+            raise OSError("Unsupported operating system")
+
+        if not os.path.isdir(os.path.join(profile_path, "Default")):
+            raise FileNotFoundError(f"Profile directory not found: {profile_path}")
+
+        return profile_path
 
     def build_dir_for_session(self, session_id: str) -> str:
         return os.path.join(

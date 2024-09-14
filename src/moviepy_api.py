@@ -116,7 +116,7 @@ class BensoundBackgroundMusic(BackgroundMusic):
 
         try:
             options = selenium.webdriver.ChromeOptions()
-            options.add_argument("--headless")
+            options.add_argument("--headless=new")
             options.add_argument("--log-level=3")
             options.add_experimental_option(
                 "prefs",
@@ -127,6 +127,7 @@ class BensoundBackgroundMusic(BackgroundMusic):
             options.add_experimental_option("excludeSwitches", ["enable-logging"])
             options.add_argument("--disable-search-engine-choice-screen")
             driver = selenium.webdriver.Chrome(options=options)
+            driver.maximize_window()
         except NoSuchDriverException as e:
             print("Please install the Chrome WebDriver to use Bensound!")
             raise e
