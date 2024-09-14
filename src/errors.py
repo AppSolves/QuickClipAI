@@ -46,3 +46,8 @@ class UtilityNotFoundError(_CustomException):
         super().__init__(
             f"Utility '{utility}' not found. Please make sure the utility is installed. For more information view the README.md file."
         )
+
+
+class BensoundDownloadError(_CustomException):
+    def __init__(self, bensound_track: str):
+        super().__init__(f"Failed to download Bensound track '{bensound_track}'!")

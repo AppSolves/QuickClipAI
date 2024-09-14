@@ -87,25 +87,24 @@ class SessionID(Enum):
     TEMP = "temp"
     LAST = "last_session_id"
     NONE = None
-    EXPLICIT = None
+    EXPLICIT = "explicit"
 
     def __new__(cls, value: str | None) -> "SessionID":
         obj = object.__new__(cls)
         obj._value_ = value
+        obj._explicit_set = False  # type: ignore
         return obj
 
     @classmethod
     def explicit(cls, session_id: str) -> "SessionID":
         explicit_member = cls.EXPLICIT
         explicit_member._value_ = session_id
-        cls._explicit_set = True
+        explicit_member._explicit_set = True  # type: ignore
         return explicit_member
 
     @property
     def value(self):
-        if self == SessionID.EXPLICIT and not (
-            hasattr(self, "_explicit_set") or self._explicit_set
-        ):
+        if self == SessionID.EXPLICIT and not self._explicit_set:  # type: ignore
             raise ValueError("EXPLICIT session ID has not been set.")
         return self._value_
 
@@ -113,16 +112,17 @@ class SessionID(Enum):
 @Singleton
 class SettingsManager:
     def __init__(self, session_id: SessionID, verbose: bool = False) -> None:
+        self.__verbose__ = verbose
+        self.__config_file__ = os.path.join(self.root_dir, "config", "config.json")
+        self.reinit()
+
         self.__session_id__ = session_id.value or uuid.uuid4().hex
         self.__session_id__ = (
             (self.last_session_id or self.__session_id__)
             if self.__session_id__ == "last_session_id"
             else self.__session_id__
         )
-        self.__verbose__ = verbose
-        self.__config_file__ = os.path.join(self.root_dir, "config", "config.json")
         os.makedirs(self.build_dir, exist_ok=True)
-        self.reinit()
 
         def __save_session_id__():
             if self.__session_id__ != "temp":

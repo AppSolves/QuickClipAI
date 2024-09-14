@@ -9,16 +9,22 @@ from enum import Enum
 import captametropolis
 import ffmpeg
 import moviepy.editor as mp
-import pyperclip as pc
 import selenium
 import selenium.webdriver
 from moviepy.audio.fx.volumex import volumex
 from moviepy.video.fx.crop import crop
 from moviepy.video.fx.resize import resize
-from selenium.common.exceptions import NoSuchDriverException
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    NoSuchDriverException,
+    NoSuchElementException,
+)
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 from config.config import SessionID, SettingsManager, Singleton
+from src.errors import BensoundDownloadError
 
 
 class SubtitleOptions:
@@ -104,11 +110,13 @@ class BensoundBackgroundMusic(BackgroundMusic):
         url = f"https://www.bensound.com/royalty-free-music?type=free&sort=relevance{search_params}"
         settings_manager = SettingsManager(session_id=SessionID.TEMP)
         self.bensound_dir = os.path.join(settings_manager.build_dir, "bensound")
+        shutil.rmtree(self.bensound_dir, ignore_errors=True)
         os.makedirs(self.bensound_dir, exist_ok=True)
 
         try:
             options = selenium.webdriver.ChromeOptions()
             options.add_argument("--headless")
+            options.add_argument("--log-level=3")
             options.add_experimental_option(
                 "prefs",
                 {
@@ -122,34 +130,52 @@ class BensoundBackgroundMusic(BackgroundMusic):
             print("Please install the Chrome WebDriver to use Bensound!")
             raise e
 
+        errors = [NoSuchElementException, ElementNotInteractableException]
+        wait = WebDriverWait(
+            driver,
+            timeout=5,
+            poll_frequency=0.2,
+            ignored_exceptions=errors,
+        )
         driver.get(url)
         driver.find_element(
             By.XPATH, "/html/body/div[5]/main/div[3]/div[4]/div[1]/button"
         ).click()
-        driver.implicitly_wait(1)
+        wait.until(
+            EC.presence_of_element_located(
+                (By.XPATH, "/html/body/div[6]/div[2]/div/div[3]/div[3]/button")
+            )
+        )
         driver.find_element(
             By.XPATH, "/html/body/div[6]/div[2]/div/div[3]/div[3]/button"
         ).click()
-        driver.find_element(
-            By.XPATH,
-            "/html/body/div[6]/div[2]/div/div[4]/div[2]/div[2]/div/div[6]/div[2]/div[3]/img",
-        ).click()
-        credit = pc.paste()
+        credit_finder = (
+            By.CSS_SELECTOR,
+            "#thanks-for-downloading > div:nth-child(2) > div.tip-text-downloading > div > div.attribution.is-flex.is-flex-direction-column.mt-5.is-clickable > div.orfium-code-wrapper.is-flex.is-justify-content-space-between.is-align-items-center > div.is-flex.is-flex-direction-column",
+        )
+        wait.until(EC.presence_of_element_located(credit_finder))
+        wait.until(lambda driver: driver.find_element(*credit_finder).text)
+        credit = driver.find_element(*credit_finder).text
         if not credit:
             raise ValueError("Failed to get credit for Bensound track!")
 
-        while not os.listdir(self.bensound_dir):
+        while not any(file.endswith(".mp3") for file in os.listdir(self.bensound_dir)):
             time.sleep(1)
 
         driver.quit()
-        file = sorted(
+        files = sorted(
             [
                 os.path.join(self.bensound_dir, file)
                 for file in os.listdir(self.bensound_dir)
                 if file.endswith(".mp3")
             ],
             key=os.path.getctime,
-        )[-1]
+        )
+
+        if not files:
+            raise BensoundDownloadError(track_name)
+
+        file = files[-1]
 
         super().__init__(
             audio_path=file,

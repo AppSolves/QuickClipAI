@@ -123,7 +123,7 @@ def generate(
             show_default=True,
             rich_help_panel="Options: Configuration",
         ),
-    ] = 16,
+    ] = 4,
 ):
     settings_manager = SettingsManager(
         session_id=SessionID.TEMP if temporary else SessionID.NONE,
@@ -298,7 +298,7 @@ def regenerate(
             show_default=True,
             rich_help_panel="Options: Configuration",
         ),
-    ] = 16,
+    ] = 4,
 ):
     settings_manager = SettingsManager(
         session_id=(
@@ -314,7 +314,9 @@ def regenerate(
     moviepy_api = MoviepyAPI(verbose=is_verbose)
 
     with open(
-        os.path.join(settings_manager.build_dir, "responses", "video_info.txt"), "r"
+        os.path.join(settings_manager.build_dir, "responses", "video_info.txt"),
+        "r",
+        encoding="utf-8",
     ) as f:
         video_info = [line for line in f.readlines() if line.strip()]
     video_title, video_description, video_hashtags = tuple(
@@ -341,7 +343,7 @@ def regenerate(
         ),
         BensoundBackgroundMusic(
             "the lounge",
-            volume_factor=0.2,
+            volume_factor=0.3,
         ),
     ]
     background_music = rd.choice(background_musics)
