@@ -577,7 +577,10 @@ class MoviepyAPI:
             if background_music
             else []
         )
-        final_audio = mp.CompositeAudioClip([final_video.audio] + background_music_clip)
+        final_audio = audio_fadeout(
+            mp.CompositeAudioClip([final_video.audio] + background_music_clip),
+            0.5,
+        )
         final_video = final_video.set_audio(final_audio)
         final_video.write_videofile(
             temp_video_path,
