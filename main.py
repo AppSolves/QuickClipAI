@@ -563,7 +563,10 @@ def hashtags(
         "#trending",
     )
     hashtags = tuple(
-        map(lambda keyword: f"#{keyword.strip()}", keywords.strip().split(","))
+        map(
+            lambda keyword: f"#{keyword.strip()}",
+            keywords.strip().replace("#", "").split(","),
+        )
     )
     hashtags = tuple(set(hashtags + always_include))
     typer.echo(f'\n{" ".join(hashtags)}')
