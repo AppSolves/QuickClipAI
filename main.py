@@ -519,9 +519,37 @@ def inspect(
     help="[purple]List[/purple] the [bold cyan]beautiful[/bold cyan] video topics. :scroll:",
     rich_help_panel="Video: Management",
 )
-def list_topics():
+def list_topics(
+    filter_keywords: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--filter-keywords",
+            "-fk",
+            help="Specify the [purple]keywords (comma separated)[/purple] to filter the video topics. :hash:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = None,
+):
+    topic_filter = (
+        tuple(
+            map(
+                lambda keyword: keyword.strip(),
+                filter_keywords.strip().replace("#", "").split(","),
+            )
+        )
+        if filter_keywords
+        else None
+    )
     settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
     past_topics = settings_manager.get("past_topics", []) or []
+    if topic_filter:
+        past_topics = [
+            topic
+            for topic in past_topics
+            if any(keyword in topic for keyword in topic_filter)
+        ]
     for index, topic in enumerate(past_topics):
         typer.echo(f"{index + 1}. {topic}")
 

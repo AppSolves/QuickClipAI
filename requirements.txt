@@ -40,7 +40,7 @@ fonttools==4.53.1
 frozenlist==1.4.1
 fsspec==2024.9.0
 future==1.0.0
-g4f==0.3.2.6
+g4f==0.3.2.7
 google-api-core==2.19.2
 google-api-python-client==2.145.0
 google-auth==2.34.0
@@ -77,7 +77,7 @@ nodriver==0.37
 numba==0.60.0
 numpy==2.0.2
 oauthlib==3.2.2
-openai==1.45.0
+openai==1.45.1
 openai-whisper==20231117
 opencv-python==4.10.0.84
 outcome==1.3.0.post0
@@ -116,7 +116,7 @@ rich==13.8.1
 rsa==4.9
 selenium==4.24.0
 semantic-version==2.10.0
-setuptools==75.0.0
+setuptools==75.1.0
 setuptools-rust==1.10.1
 shellingham==1.5.4
 six==1.16.0
