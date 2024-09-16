@@ -515,7 +515,7 @@ def inspect(
 
 
 @app.command(
-    name="list, show",
+    name="list, topics",
     help="[purple]List[/purple] the [bold cyan]beautiful[/bold cyan] video topics. :scroll:",
     rich_help_panel="Video: Management",
 )
@@ -570,6 +570,39 @@ def hashtags(
     )
     hashtags = tuple(set(hashtags + always_include))
     typer.echo(f'\n{" ".join(hashtags)}')
+
+
+@app.command(
+    name="show, play",
+    help="[purple]Show[/purple] the [bold cyan]beautiful[/bold cyan] video. :tv:",
+    rich_help_panel="Video: Management",
+)
+def show(
+    session_id: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--session-id",
+            "-sid",
+            help="Specify the video's [purple]session ID[/purple] to show the video. :id:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = None,
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    session_id = session_id or settings_manager.last_session_id
+    if not session_id or not settings_manager.session_exists(
+        SessionID.explicit(session_id)
+    ):
+        typer.echo(
+            "No session ID found. Please provide a session ID to show the video."
+        )
+        raise typer.Exit(code=1)
+    typer.echo(f"Session UID: {session_id}")
+    moviepy_api = MoviepyAPI(verbose=is_verbose)
+    video_path = moviepy_api.get_video_path(session_id)
+    os.system(f'start "" "{video_path}"')
 
 
 if __name__ == "__main__":
