@@ -15,7 +15,7 @@ browser-cookie3==0.19.1
 cachetools==5.5.0
 cairocffi==1.7.1
 CairoSVG==2.7.1
-captametropolis==1.0.7
+captametropolis==1.0.9
 certifi==2024.8.30
 cffi==1.17.1
 charset-normalizer==3.3.2
