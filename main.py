@@ -633,5 +633,80 @@ def show(
     os.system(f'start "" "{video_path}"')
 
 
+@app.command(
+    name="thumbnails, pics",
+    help="[purple]Show[/purple] the [bold cyan]thumbnails[/bold cyan] for the current session. :tv:",
+    rich_help_panel="Video: Management",
+)
+def thumbnails(
+    session_id: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--session-id",
+            "-sid",
+            help="Specify the video's [purple]session ID[/purple] to show the thumbnails. :id:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = None,
+    show: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--show",
+            "-s",
+            help="Specify whether or not to show the thumbnails in the file explorer. :file_folder:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = False,
+    by_index: Annotated[
+        Optional[int],
+        typer.Option(
+            ...,
+            "--by-index",
+            "-bi",
+            help="Specify the [purple]index[/purple] of the thumbnail to show. :1234:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = None,
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    session_id = session_id or settings_manager.last_session_id
+    if not session_id or not settings_manager.session_exists(
+        SessionID.explicit(session_id)
+    ):
+        typer.echo(
+            "No session ID found. Please provide a session ID to show the thumbnails."
+        )
+        raise typer.Exit(code=1)
+    typer.echo(f"Session UID: {session_id}")
+    thumbnail_dir = os.path.join(
+        settings_manager.build_dir_for_session(session_id),
+        "pictures",
+    )
+    if not os.path.exists(thumbnail_dir) or not os.listdir(thumbnail_dir):
+        typer.echo("No thumbnails found.")
+        raise typer.Exit(code=1)
+
+    if by_index is not None:
+        thumbnail_path = os.path.join(
+            thumbnail_dir,
+            os.listdir(thumbnail_dir)[by_index],
+        )
+        typer.echo(f"Thumbnail Path: {thumbnail_path}")
+        if show:
+            os.system(f'start "" "{thumbnail_path}"')
+    else:
+        typer.echo("Thumbnail Paths:")
+        for index, thumbnail in enumerate(os.listdir(thumbnail_dir)):
+            typer.echo(f'{index + 1}. "{thumbnail}"')
+
+        if show:
+            os.system(f'start "" "{thumbnail_dir}"')
+
+
 if __name__ == "__main__":
     app()
