@@ -50,7 +50,18 @@ class UploadAPI:
 
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
-                credentials.refresh(google.auth.transport.requests.Request())
+                try:
+                    credentials.refresh(google.auth.transport.requests.Request())
+                except Exception as e:
+                    print(f"Error refreshing credentials: {e}")
+                    print("Reauthenticating...\n")
+                    youtube_credentials = settings_manager.get("publisher", {}).get("youtube", None)  # type: ignore
+                    if not youtube_credentials:
+                        raise Exception("No YouTube credentials found.")
+                    flow = InstalledAppFlow.from_client_config(
+                        youtube_credentials, SCOPES
+                    )
+                    credentials = flow.run_local_server()
             else:
                 youtube_credentials = settings_manager.get("publisher", {}).get("youtube", None)  # type: ignore
                 if not youtube_credentials:
