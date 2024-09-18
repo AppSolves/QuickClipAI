@@ -696,13 +696,13 @@ def thumbnails(
             thumbnail_dir,
             os.listdir(thumbnail_dir)[by_index],
         )
-        typer.echo(f"Thumbnail Path: {thumbnail_path}")
+        typer.echo(thumbnail_path)
         if show:
             os.system(f'start "" "{thumbnail_path}"')
     else:
         typer.echo("Thumbnail Paths:")
         for index, thumbnail in enumerate(os.listdir(thumbnail_dir)):
-            typer.echo(f'{index + 1}. "{thumbnail}"')
+            typer.echo(f'{index + 1}. "{os.path.join(thumbnail_dir, thumbnail)}"')
 
         if show:
             os.system(f'start "" "{thumbnail_dir}"')
