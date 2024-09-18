@@ -592,7 +592,7 @@ def hashtags(
     )
     hashtags = tuple(
         map(
-            lambda keyword: f"#{keyword.strip()}",
+            lambda keyword: f"#{keyword.lower().strip()}",
             keywords.strip().replace("#", "").split(","),
         )
     )
