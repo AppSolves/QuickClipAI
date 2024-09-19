@@ -531,27 +531,38 @@ def list_topics(
             rich_help_panel="Options: Customization",
         ),
     ] = None,
+    enforce: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--all/--any",
+            help="Specify whether to [purple]enforce[/purple] all or any of the filter keywords. :hash:",
+            rich_help_panel="Options: Customization",
+        ),
+    ] = False,
 ):
     topic_filter = (
         tuple(
-            map(
-                lambda keyword: keyword.strip(),
-                filter_keywords.strip().replace("#", "").split(","),
-            )
+            [
+                keyword.strip()
+                for keyword in filter_keywords.strip().replace("#", "").split(",")
+                if keyword
+            ]
         )
         if filter_keywords
         else None
     )
     settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
     past_topics = settings_manager.get("past_topics", []) or []
-    if topic_filter:
-        past_topics = [
-            topic
-            for topic in past_topics
-            if any(keyword in topic for keyword in topic_filter)
-        ]
+    filter_method = all if enforce else any
     for index, topic in enumerate(past_topics):
-        typer.echo(f"{index + 1}. {topic}")
+        if topic_filter:
+            if filter_method(
+                keyword.lower() in topic.lower() for keyword in topic_filter
+            ):
+                typer.echo(f"{index + 1}. {topic}")
+        else:
+            typer.echo(f"{index + 1}. {topic}")
 
 
 @app.command(
