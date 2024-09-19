@@ -13,7 +13,7 @@ from g4f.cookies import read_cookie_files, set_cookies_dir
 from g4f.errors import MissingAuthError, RateLimitError
 from g4f.requests.raise_for_status import CloudflareError
 
-from config.config import SessionID, SettingsManager, Singleton, classproperty
+from config.config import SessionID, SettingsManager, Singleton
 
 
 class MessageSender(Enum):
