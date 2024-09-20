@@ -483,7 +483,7 @@ def upload(
 @app.command(
     name="inspect, info, metadata",
     help="[purple]View[/purple] the [bold cyan]beautiful video's[/bold cyan] metadata. :gear:",
-    rich_help_panel="Video: Configuration",
+    rich_help_panel="Video: Information",
 )
 def inspect(
     session_id: Annotated[
@@ -517,7 +517,7 @@ def inspect(
 @app.command(
     name="list, topics",
     help="[purple]List[/purple] the [bold cyan]beautiful[/bold cyan] video topics. :scroll:",
-    rich_help_panel="Video: Management",
+    rich_help_panel="Video: Information",
 )
 def list_topics(
     filter_keywords: Annotated[
@@ -568,7 +568,7 @@ def list_topics(
 @app.command(
     name="hashtags",
     help="[purple]Generate[/purple] [bold cyan]beautiful[/bold cyan] video hashtags from comma separated keywords. :hash:",
-    rich_help_panel="Video: Configuration",
+    rich_help_panel="Video: Information",
 )
 def hashtags(
     keywords: Annotated[
@@ -614,7 +614,7 @@ def hashtags(
 @app.command(
     name="show, play",
     help="[purple]Show[/purple] the [bold cyan]beautiful[/bold cyan] video. :tv:",
-    rich_help_panel="Video: Management",
+    rich_help_panel="Video: Preview",
 )
 def show(
     session_id: Annotated[
@@ -647,7 +647,7 @@ def show(
 @app.command(
     name="thumbnails, pics",
     help="[purple]Show[/purple] the [bold cyan]thumbnails[/bold cyan] for the current session. :tv:",
-    rich_help_panel="Video: Management",
+    rich_help_panel="Video: Preview",
 )
 def thumbnails(
     session_id: Annotated[
