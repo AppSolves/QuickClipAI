@@ -2,6 +2,19 @@
 
 <img src="./assets/github/readme-anim.gif" alt="readmeanim" width="400" height="400"/>
 
+-----
+
+Check out these examples of videos generated using `QuickClipAI` (by [CurioBurstz](https://www.youtube.com/@curioburstz?sub_confirmation=1)):
+
+<a href="http://www.youtube.com/watch?v=p9FsprPymo4" title="Why You Feel Pain: The Fascinating Science Behind Your Body's Alarm System">
+  <img src="http://img.youtube.com/vi/p9FsprPymo4/0.jpg" alt="CurioBurstz No. 1" width="300" height="225" hspace="25">
+</a>
+<a href="http://www.youtube.com/watch?v=1ObvKfjU0Vg" title="The Mystery of Déjà Vu: Unraveling the Mind's Glitch">
+  <img src="http://img.youtube.com/vi/1ObvKfjU0Vg/0.jpg" alt="CurioBurstz No. 2" width="300" height="225">
+</a>
+
+-----
+
 # `QuickClipAI`
 
 ![GitHub stars](https://img.shields.io/github/stars/AppSolves/QuickClipAI)
