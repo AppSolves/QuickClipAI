@@ -15,7 +15,7 @@ class PromptManager:
 
     def reinit(self):
         self.__initialized__ = False
-        topics = self.__settings_manager__.get("past_topics", [])
+        topics = list(self.__settings_manager__.get("past_topics", {}).values() or [])  # type: ignore
         for root, _, files in os.walk(self.__prompts_dir__):
             for file in files:
                 with open(os.path.join(root, file), "r") as f:

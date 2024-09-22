@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
+from rich.console import Console
+from rich.table import Table
 
 from src.cli_helpers import AliasGroup
 
@@ -267,9 +269,9 @@ def generate(
             rel_height_pos=0.3,
         ),
     )
-    past_topics = settings_manager.get("past_topics", []) or []
+    past_topics = settings_manager.get("past_topics", {}) or {}
     if video_title not in past_topics:  # type: ignore
-        past_topics.append(video_title)  # type: ignore
+        past_topics[settings_manager.session_id] = video_title  # type: ignore
         settings_manager.set("past_topics", past_topics)
 
 
@@ -412,9 +414,9 @@ def regenerate(
             rel_height_pos=0.3,
         ),
     )
-    past_topics = settings_manager.get("past_topics", []) or []
+    past_topics = settings_manager.get("past_topics", {}) or {}
     if video_title not in past_topics:  # type: ignore
-        past_topics.append(video_title)  # type: ignore
+        past_topics[settings_manager.session_id] = video_title  # type: ignore
         settings_manager.set("past_topics", past_topics)
 
 
@@ -531,9 +533,8 @@ def inspect(
         )
         raise typer.Exit(code=1)
     typer.echo(f"Session UID: {session_id}")
-    moviepy_api = MoviepyAPI(verbose=is_verbose)
-    video_path = moviepy_api.get_video_path(session_id)
-    metadata = moviepy_api.get_metadata(video_path)
+    video_path = settings_manager.get_video_path(session_id)
+    metadata = settings_manager.get_metadata(video_path)
     typer.echo(json.dumps(metadata, indent=4))
 
 
@@ -576,7 +577,7 @@ def list_topics(
         else None
     )
     settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
-    past_topics = settings_manager.get("past_topics", []) or []
+    past_topics = list(settings_manager.get("past_topics", {}).values() or [])  # type: ignore
     filter_method = all if enforce else any
     for index, topic in enumerate(past_topics):
         if topic_filter:
@@ -602,22 +603,22 @@ def delete_topic(
         int,
         typer.Argument(
             ...,
-            help="Specify the [purple]index[/purple] of the video topic to delete. :1234:",
+            help="Specify the [purple]index[/purple] of the video topic to delete (starting with 0). :1234:",
             show_default=False,
             rich_help_panel="Options: Customization",
         ),
     ],
 ):
     settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
-    past_topics = settings_manager.get("past_topics", []) or []
-    assert isinstance(past_topics, list)
+    past_topics = settings_manager.get("past_topics", {}) or {}
+    assert isinstance(past_topics, dict)
     if not past_topics:
         typer.echo("No video topics found.")
         raise typer.Exit(code=1)
-    if not (1 <= topic_index <= len(past_topics)):
+    if not 0 <= topic_index < len(past_topics):
         typer.echo("Invalid topic index.")
         raise typer.Exit(code=1)
-    topic = past_topics.pop(topic_index - 1)
+    topic = past_topics.pop(list(past_topics.keys())[topic_index])
     settings_manager.set("past_topics", past_topics)
     typer.echo(f"Deleted video topic: {topic}")
 
@@ -717,6 +718,61 @@ def delete_build_dir(
     typer.echo("Deleted video build directory.")
 
 
+@build_app.command(
+    name="sessions",
+    help="[purple]List[/purple] the [bold cyan]beautiful[/bold cyan] video sessions. :scroll:",
+    rich_help_panel="Video: Information",
+)
+def sessions(
+    ids_only: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--ids-only",
+            "-io",
+            help="Specify whether or not to show only the session IDs. :id:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = False,
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    sessions = settings_manager.get_sessions()
+    typer.echo(f"Total Sessions: {len(sessions)}\n")
+
+    if ids_only:
+        for index, session in enumerate(sessions):
+            typer.echo(f"{index + 1}. {session.id.value}")
+        return
+
+    console = Console()
+    table = Table(title="Video Sessions")
+    table.add_column("Session ID", style="cyan")
+    table.add_column("Owner", style="green")
+    table.add_column("Created At", style="white")
+    table.add_column("Duration (in s)", style="magenta")
+    table.add_column("Title", style="yellow")
+    table.add_column("Description", style="blue")
+    table.add_column("Hashtags", style="red")
+    table.add_column("Genre", style="purple")
+    table.add_column("Copyright", style="orange1")
+    table.add_column("Credits", style="cyan")
+    for session in sessions:
+        table.add_row(
+            session.id.value,
+            session.video_owner,
+            str(session.video_date),
+            str(session.video_duration),
+            session.video_title,
+            session.video_description,
+            ",".join(session.video_tags),
+            str(session.video_genre),
+            session.video_copyright,
+            session.video_credits.strip(),
+        )
+    console.print(table)
+
+
 @app.command(
     name="hashtags",
     help="[purple]Generate[/purple] [bold cyan]beautiful[/bold cyan] video hashtags from comma separated keywords. :hash:",
@@ -791,8 +847,7 @@ def show(
         )
         raise typer.Exit(code=1)
     typer.echo(f"Session UID: {session_id}")
-    moviepy_api = MoviepyAPI(verbose=is_verbose)
-    video_path = moviepy_api.get_video_path(session_id)
+    video_path = settings_manager.get_video_path(session_id)
     os.system(f'start "" "{video_path}"')
 
 

@@ -1,4 +1,3 @@
-import json
 import os
 import random as rd
 import shutil
@@ -346,48 +345,6 @@ class MoviepyAPI:
         shutil.move(temp_video_path, video_path)
         if verbose:
             print("Metadata injected!")
-
-    def get_video_path(self, session_id: str) -> str:
-        def file_filter(file) -> bool:
-            if not os.path.isfile(file) or not file.endswith(".mp4"):
-                return False
-
-            probe = ffmpeg.probe(file)
-            if not probe:
-                return False
-
-            return probe["format"]["tags"]["episode_id"] == session_id
-
-        try:
-            file = tuple(
-                filter(
-                    lambda file: file_filter(
-                        os.path.join(self.__settings_manager__.output_dir, file)
-                    ),
-                    os.listdir(self.__settings_manager__.output_dir),
-                )
-            )[0]
-        except IndexError:
-            raise FileNotFoundError(f"No video found for session {session_id}!")
-        return os.path.join(
-            self.__settings_manager__.output_dir,
-            file,
-        )
-
-    def get_metadata(self, video_path: str, verbose: bool = False) -> dict[str, str]:
-        if verbose:
-            print("Getting metadata...")
-
-        p = ffmpeg.probe(video_path)
-        metadata = p.get("format", {}).get("tags", {})
-
-        if not metadata:
-            raise ValueError("Metadata not found!")
-
-        if verbose:
-            print(f"Metadata: {json.dumps(metadata, indent=4)}")
-
-        return json.loads(json.dumps(metadata))
 
     def generate_video(
         self,

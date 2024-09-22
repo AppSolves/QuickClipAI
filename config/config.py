@@ -10,6 +10,7 @@ from base64 import urlsafe_b64encode
 from enum import Enum
 from typing import Iterable
 
+import ffmpeg
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -84,11 +85,23 @@ def Singleton(cls):
     return __get_instance__
 
 
+class _SessionID:
+    def __init__(self, value: str | None) -> None:
+        self.__value__ = value
+
+    @property
+    def value(self) -> str | None:
+        return self.__value__
+
+    def to_enum(self) -> "SessionID":
+        return SessionID.explicit(self.value)  # type: ignore
+
+
 class SessionID(Enum):
     TEMP = "temp"
     LAST = "last_session_id"
     NONE = None
-    EXPLICIT = "explicit"
+    _EXPLICIT = "explicit"
 
     def __new__(cls, value: str | None) -> "SessionID":
         obj = object.__new__(cls)
@@ -98,16 +111,136 @@ class SessionID(Enum):
 
     @classmethod
     def explicit(cls, session_id: str) -> "SessionID":
-        explicit_member = cls.EXPLICIT
+        explicit_member = cls._EXPLICIT
         explicit_member._value_ = session_id
         explicit_member._explicit_set = True  # type: ignore
         return explicit_member
 
     @property
     def value(self):
-        if self == SessionID.EXPLICIT and not self._explicit_set:  # type: ignore
+        if self == SessionID._EXPLICIT and not self._explicit_set:  # type: ignore
             raise ValueError("EXPLICIT session ID has not been set.")
         return self._value_
+
+    def copy(self) -> "_SessionID":
+        return _SessionID(self.value)
+
+
+class Session:
+    def __init__(self, session_id: _SessionID) -> None:
+        self.__session_id__ = session_id
+        assert self.__session_id__.value is not None
+        metadata = self.__get_metadata__(
+            self.__get_video_path__(self.__session_id__.value)
+        )
+
+        self.__video_owner__ = metadata.get("artist", "Unknown")
+        self.__video_title__ = metadata.get("title", "Unknown")
+        self.__video_description__ = metadata.get("description", "Unknown")
+        try:
+            self.__video_duration__ = float(
+                ffmpeg.probe(self.__get_video_path__(self.__session_id__.value))
+                .get("format", {})
+                .get("duration", "Unknown")
+            )
+        except:
+            self.__video_duration__ = "Unknown"
+        try:
+            self.__video_genre__ = int(metadata.get("genre", "Unknown"))
+        except:
+            self.__video_genre__ = "Unknown"
+        try:
+            self.__video_date__ = int(metadata.get("date", "Unknown"))
+        except:
+            self.__video_date__ = "Unknown"
+        self.__video_tags__ = list(
+            map(
+                lambda tag: tag.strip(),
+                metadata.get("comment", "").split(",") or [],
+            )
+        )
+        self.__video_copyright__ = metadata.get("copyright", "Unknown")
+        self.__video_credits__ = metadata.get("album", "Unknown")
+
+    def __get_metadata__(self, video_path: str) -> dict[str, str]:
+        p = ffmpeg.probe(video_path)
+        metadata = p.get("format", {}).get("tags", {})
+
+        if not metadata:
+            raise ValueError("Metadata not found!")
+
+        return json.loads(json.dumps(metadata))
+
+    def __get_video_path__(self, session_id: str) -> str:
+        def file_filter(file) -> bool:
+            if not os.path.isfile(file) or not file.endswith(".mp4"):
+                return False
+
+            probe = ffmpeg.probe(file)
+            if not probe:
+                return False
+
+            return probe["format"]["tags"]["episode_id"] == session_id
+
+        try:
+            file = tuple(
+                filter(
+                    lambda file: file_filter(os.path.join(self.__output_dir__, file)),
+                    os.listdir(self.__output_dir__),
+                )
+            )[0]
+        except IndexError:
+            raise FileNotFoundError(f"No video found for session {session_id}!")
+        return os.path.join(
+            self.__output_dir__,
+            file,
+        )
+
+    @property
+    def __output_dir__(self) -> str:
+        return os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "output"
+        )
+
+    @property
+    def id(self) -> SessionID:
+        return self.__session_id__.to_enum()
+
+    @property
+    def video_owner(self) -> str:
+        return self.__video_owner__
+
+    @property
+    def video_title(self) -> str:
+        return self.__video_title__
+
+    @property
+    def video_description(self) -> str:
+        return self.__video_description__
+
+    @property
+    def video_duration(self) -> float | str:
+        return self.__video_duration__
+
+    @property
+    def video_genre(self) -> int | str:
+        return self.__video_genre__
+
+    @property
+    def video_date(self) -> int | str:
+        return self.__video_date__
+
+    @property
+    def video_tags(self) -> list:
+        return self.__video_tags__
+
+    @property
+    def video_copyright(self) -> str:
+        return self.__video_copyright__
+
+    @property
+    def video_credits(self) -> str:
+        return self.__video_credits__
 
 
 @Singleton
@@ -131,6 +264,46 @@ class SettingsManager:
 
         atexit.register(__save_session_id__)
 
+    def get_metadata(self, video_path: str, verbose: bool = False) -> dict[str, str]:
+        if verbose:
+            print("Getting metadata...")
+
+        p = ffmpeg.probe(video_path)
+        metadata = p.get("format", {}).get("tags", {})
+
+        if not metadata:
+            raise ValueError("Metadata not found!")
+
+        if verbose:
+            print(f"Metadata: {json.dumps(metadata, indent=4)}")
+
+        return json.loads(json.dumps(metadata))
+
+    def get_video_path(self, session_id: str) -> str:
+        def file_filter(file) -> bool:
+            if not os.path.isfile(file) or not file.endswith(".mp4"):
+                return False
+
+            probe = ffmpeg.probe(file)
+            if not probe:
+                return False
+
+            return probe["format"]["tags"]["episode_id"] == session_id
+
+        try:
+            file = tuple(
+                filter(
+                    lambda file: file_filter(os.path.join(self.output_dir, file)),
+                    os.listdir(self.output_dir),
+                )
+            )[0]
+        except IndexError:
+            raise FileNotFoundError(f"No video found for session {session_id}!")
+        return os.path.join(
+            self.output_dir,
+            file,
+        )
+
     def session_exists(self, session_id: SessionID) -> bool:
         if session_id == SessionID.LAST:
             session_id_str = self.last_session_id
@@ -142,6 +315,17 @@ class SettingsManager:
             if session_id_str
             else False
         )
+
+    def get_sessions(self) -> list[Session]:
+        past_topics = self.get("past_topics", {}) or {}
+        assert isinstance(past_topics, dict)
+
+        def get_session_id(id: str) -> _SessionID:
+            return SessionID.explicit(id).copy()
+
+        return [
+            Session(get_session_id(session_id)) for session_id in past_topics.keys()
+        ]
 
     @property
     def session_id(self) -> str:
