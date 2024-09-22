@@ -1,6 +1,7 @@
 import json
 import os
 import random as rd
+import shutil
 import sys
 import traceback
 from pathlib import Path
@@ -30,6 +31,28 @@ app: typer.Typer = typer.Typer(
         "help_option_names": ["-h", "--help", "-?"],
     },
 )
+topics_app = typer.Typer(
+    name="topics",
+    help="[purple]Manage[/purple] the [bold cyan]beautiful[/bold cyan] video topics. :scroll:",
+    rich_markup_mode="rich",
+    cls=AliasGroup,
+    context_settings={
+        "help_option_names": ["-h", "--help", "-?"],
+    },
+    rich_help_panel="Video: Information",
+)
+build_app = typer.Typer(
+    name="build",
+    help="[purple]Manage[/purple] the [bold cyan]beautiful[/bold cyan] video build. :clapper:",
+    rich_markup_mode="rich",
+    cls=AliasGroup,
+    context_settings={
+        "help_option_names": ["-h", "--help", "-?"],
+    },
+    rich_help_panel="Video: Management",
+)
+app.add_typer(build_app, name="build", rich_help_panel="Video: Management")
+app.add_typer(topics_app, name="topics", rich_help_panel="Video: Information")
 
 
 @app.callback()
@@ -66,7 +89,7 @@ from src.upload_api import UploadAPI
 
 
 @app.command(
-    name="generate, build, new",
+    name="generate, new",
     help="[purple]Create[/purple] a [italic]new[/italic] [bold cyan]beautiful[/bold cyan] video. :clapper:",
     rich_help_panel="Video: Management",
 )
@@ -514,8 +537,8 @@ def inspect(
     typer.echo(json.dumps(metadata, indent=4))
 
 
-@app.command(
-    name="list, topics",
+@topics_app.command(
+    name="list",
     help="[purple]List[/purple] the [bold cyan]beautiful[/bold cyan] video topics. :scroll:",
     rich_help_panel="Video: Information",
 )
@@ -563,6 +586,135 @@ def list_topics(
                 typer.echo(f"{index + 1}. {topic}")
         else:
             typer.echo(f"{index + 1}. {topic}")
+
+    if not past_topics:
+        typer.echo("No video topics found.")
+        raise typer.Exit(code=1)
+
+
+@topics_app.command(
+    name="delete, remove",
+    help="[purple]Delete[/purple] the [bold cyan]beautiful[/bold cyan] video topic. :wastebasket:",
+    rich_help_panel="Video: Management",
+)
+def delete_topic(
+    topic_index: Annotated[
+        int,
+        typer.Argument(
+            ...,
+            help="Specify the [purple]index[/purple] of the video topic to delete. :1234:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ],
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    past_topics = settings_manager.get("past_topics", []) or []
+    assert isinstance(past_topics, list)
+    if not past_topics:
+        typer.echo("No video topics found.")
+        raise typer.Exit(code=1)
+    if not (1 <= topic_index <= len(past_topics)):
+        typer.echo("Invalid topic index.")
+        raise typer.Exit(code=1)
+    topic = past_topics.pop(topic_index - 1)
+    settings_manager.set("past_topics", past_topics)
+    typer.echo(f"Deleted video topic: {topic}")
+
+
+@build_app.command(
+    name="open, explore",
+    help="[purple]Open[/purple] the [bold cyan]beautiful[/bold cyan] video build directory. :file_folder:",
+    rich_help_panel="Video: Management",
+)
+def open_build_dir(
+    session_id: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--session-id",
+            "-sid",
+            help="Specify the video's [purple]session ID[/purple] to open the build directory. :id:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = None,
+    sub_path: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--sub-path",
+            "-sp",
+            help="Specify the [purple]sub path[/purple] to open within the build directory (e.g. 'pictures/0.jpeg'). :file_folder:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = None,
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    session_id = session_id or settings_manager.last_session_id
+    if not session_id or not settings_manager.session_exists(
+        SessionID.explicit(session_id)
+    ):
+        typer.echo(
+            "No session ID found. Please provide a session ID to open the build directory."
+        )
+        raise typer.Exit(code=1)
+    typer.echo(f"Session UID: {session_id}")
+    path_to_open = settings_manager.build_dir_for_session(session_id)
+    if sub_path and os.path.exists(os.path.join(path_to_open, sub_path)):
+        path_to_open = os.path.join(path_to_open, sub_path)
+    os.system(f'start "" "{path_to_open}"')
+
+
+@build_app.command(
+    name="delete, remove",
+    help="[purple]Delete[/purple] the [bold cyan]beautiful[/bold cyan] video build directory. :wastebasket:",
+    rich_help_panel="Video: Management",
+)
+def delete_build_dir(
+    session_id: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--session-id",
+            "-sid",
+            help="Specify the video's [purple]session ID[/purple] to delete the build directory. :id:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = None,
+    sub_path: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--sub-path",
+            "-sp",
+            help="Specify the [purple]sub path[/purple] to delete within the build directory (e.g. 'pictures/0.jpeg'). :file_folder:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = None,
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    session_id = session_id or settings_manager.last_session_id
+    if not session_id or not settings_manager.session_exists(
+        SessionID.explicit(session_id)
+    ):
+        typer.echo(
+            "No session ID found. Please provide a session ID to delete the build directory."
+        )
+        raise typer.Exit(code=1)
+    typer.echo(f"Session UID: {session_id}")
+    path_to_delete = settings_manager.build_dir_for_session(session_id)
+    if sub_path and os.path.exists(os.path.join(path_to_delete, sub_path)):
+        path_to_delete = os.path.join(path_to_delete, sub_path)
+    if os.path.exists(path_to_delete):
+        if os.path.isfile(path_to_delete):
+            os.remove(path_to_delete)
+        else:
+            shutil.rmtree(path_to_delete)
+    typer.echo("Deleted video build directory.")
 
 
 @app.command(
