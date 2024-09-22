@@ -735,12 +735,29 @@ def sessions(
             rich_help_panel="Options: Customization",
         ),
     ] = False,
+    last_only: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--last-only",
+            "-lo",
+            help="Specify whether or not to show only the last session ID. :id:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = False,
 ):
     settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
     sessions = settings_manager.get_sessions()
-    typer.echo(f"Total Sessions: {len(sessions)}\n")
+    typer.echo(
+        f"Total Sessions: {len(sessions)}\n" if not last_only else "Last Session:\n"
+    )
 
     if ids_only:
+        if last_only:
+            typer.echo(settings_manager.last_session_id)
+            return
+
         for index, session in enumerate(sessions):
             typer.echo(f"{index + 1}. {session.id.value}")
         return
@@ -758,6 +775,9 @@ def sessions(
     table.add_column("Copyright", style="orange1")
     table.add_column("Credits", style="cyan")
     for session in sessions:
+        if last_only and session.id.value != settings_manager.last_session_id:
+            continue
+
         table.add_row(
             session.id.value,
             session.video_owner,
