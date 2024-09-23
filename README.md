@@ -139,7 +139,9 @@ settings_manager.set(
 )
 ```
 
-> ⚠️ **IMPORTANT**: For Instagram, you only have to be logged in to the respective platform in your chrome browser. TikTok is currently not supported yet due to the lack of an official API.
+> ⚠️ **IMPORTANT**: For Instagram and TikTok, you only have to be logged in to the respective platform in your chrome browser.
+>
+> It may be necessary to occasionally resolve captchas on [TikTok](https://www.tiktok.com/tiktokstudio) when using the TikTok provider until a more permanent solution is found (e.g. automatic captcha solving).
 
 Follow these guides to setup the publisher credentials:
 - Set up a Google Cloud Project for [YouTube](https://developers.google.com/youtube/v3/guides/uploading_a_video)
@@ -196,8 +198,6 @@ ENCRYPTION_KEY=your_encryption_key
 
 You can easily upload your generated videos to YouTube and Instagram automatically using the `UploadAPI` class. You can set the `youtube` parameter to `True` to upload the video to YouTube, and the `instagram` and `tiktok` parameters to `True` to upload the video to Instagram and TikTok respectively.
 
-> :information_source: **NOTE**: The `tiktok` paramater is ignored as [TikTok](https://tiktok.com) is currently not supported.
-
 You can then use the `UploadAPI` class to upload the video:
 
 ```python
@@ -206,7 +206,7 @@ upload_api.upload_video(
     session_id="...", # The session ID of the video to upload (will be displayed in the console after generating the video). Leave `None` to use the last session ID.
     youtube=True,
     instagram=True,
-    tiktok=True, # Currently not supported
+    tiktok=True,
 )
 ```
 

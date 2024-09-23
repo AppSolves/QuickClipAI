@@ -809,33 +809,8 @@ def hashtags(
         ),
     ],
 ):
-    always_include = (
-        "#aiexplained",
-        "#ai",
-        "#simplifiedscience",
-        "#quickfacts",
-        "#learnin60seconds",
-        "#knowledgenuggets",
-        "#mindblown",
-        "#didyouknow",
-        "#funfacts",
-        "#brainboost",
-        "#dailylearning",
-        "#techexplained",
-        "#smartshorts",
-        "#curiosity",
-        "#learneveryday",
-        "#factcheck",
-        "#viral",
-        "#trending",
-    )
-    hashtags = tuple(
-        map(
-            lambda keyword: f"#{keyword.lower().strip()}",
-            keywords.strip().replace("#", "").split(","),
-        )
-    )
-    hashtags = tuple(set(hashtags + always_include))
+    upload_api = UploadAPI(verbose=is_verbose)
+    hashtags = upload_api.generate_hashtags(keywords.split(","))
     typer.echo(f'\n{" ".join(hashtags)}')
 
 

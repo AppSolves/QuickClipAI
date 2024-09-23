@@ -32,7 +32,7 @@ httplib2.RETRIES = 1
 class UploadAPI:
     def __init__(self, verbose: bool = False):
         self.__verbose__ = verbose
-        self.__settings_manager__ = SettingsManager(session_id=SessionID.NONE)
+        self.__settings_manager__ = SettingsManager(session_id=SessionID.TEMP, verbose=verbose)
 
     @classproperty
     def authenticated_service(cls):
@@ -73,6 +73,37 @@ class UploadAPI:
         
         settings_manager.set("youtube_auth_session", credentials.to_json(), encrypt=True)
         return build("youtube", "v3", credentials=credentials)
+    
+    @staticmethod
+    def generate_hashtags(keywords: list[str]) -> tuple[str, ...]:
+        always_include = (
+            "#aiexplained",
+            "#ai",
+            "#simplifiedscience",
+            "#quickfacts",
+            "#learnin60seconds",
+            "#knowledgenuggets",
+            "#mindblown",
+            "#didyouknow",
+            "#funfacts",
+            "#brainboost",
+            "#dailylearning",
+            "#techexplained",
+            "#smartshorts",
+            "#curiosity",
+            "#learneveryday",
+            "#factcheck",
+            "#viral",
+            "#trending",
+        )
+        hashtags = tuple(
+            map(
+                lambda keyword: f"#{keyword.lower().strip()}",
+                ",".join(keywords).strip().replace("#", "").split(","),
+            )
+        )
+        hashtags = tuple(set(hashtags + always_include))
+        return hashtags
 
     def upload(self, session_id: str, youtube: bool, instagram: bool, tiktok: bool, thumbnail_path: Path | None = None) -> bool:
         if self.__verbose__:
@@ -260,13 +291,22 @@ class UploadAPI:
                 print("Please install the Chrome WebDriver to upload to Instagram.")
                 raise e
             
-            def click_element(selector):
+            def wait_for_element(selector: tuple[str, str]):
                 wait.until(EC.presence_of_element_located(selector))
-                driver.find_element(*selector).click()
+                return driver.find_element(*selector)
+            
+            def click_element(selector: tuple[str, str]):
+                wait_for_element(selector).click()
 
-            def send_keys(selector, keys):
-                wait.until(EC.presence_of_element_located(selector))
-                driver.find_element(*selector).send_keys(keys)
+            def send_keys(selector: tuple[str, str], *keys: str):
+                wait_for_element(selector).send_keys(*keys)
+
+            def is_selected(selector: tuple[str, str]) -> bool:
+                return wait_for_element(selector).is_selected()
+            
+            def wait_until(selector: tuple[str, str], callable) -> bool:
+                wait_for_element(selector)
+                return wait.until(lambda driver: callable(driver.find_element(*selector)))
             
             try:
                 driver.get("https://www.instagram.com")
@@ -300,7 +340,87 @@ class UploadAPI:
                 error = True
 
         if tiktok:
-            pass
+            try:
+                if not thumbnail_path:
+                    default_thumbnail_path = os.path.join(
+                        self.__settings_manager__.build_dir_for_session(session_id),
+                        "pictures",
+                    )
+                    available_thumbnails = list(
+                        filter(
+                            lambda file: file.endswith(".jpeg") or file.endswith(".png"),
+                            os.listdir(default_thumbnail_path),
+                        )
+                    )
+                    default_thumbnail_path = os.path.join(
+                        default_thumbnail_path,
+                        rd.choice(available_thumbnails),
+                    ) if available_thumbnails else None
+                    thumbnail_path = Path(default_thumbnail_path) if default_thumbnail_path else None
+
+                options = selenium.webdriver.ChromeOptions()
+                options.add_experimental_option("detach", True)
+                options.add_argument("--log-level=3")
+                options.add_argument(f"user-data-dir={self.__settings_manager__.chrome_profile_dir}")
+                options.add_experimental_option("excludeSwitches", ["enable-logging"])
+                options.add_argument("--disable-search-engine-choice-screen")
+                driver = selenium.webdriver.Chrome(options=options)
+                driver.maximize_window()
+                errors = [NoSuchElementException, ElementNotInteractableException]
+                wait = WebDriverWait(driver, timeout=5, poll_frequency=.2, ignored_exceptions=errors)
+            except NoSuchDriverException as e:
+                print("Please install the Chrome WebDriver to upload to TikTok.")
+                raise e
+            
+            def wait_for_element(selector: tuple[str, str]):
+                wait.until(EC.presence_of_element_located(selector))
+                return driver.find_element(*selector)
+            
+            def click_element(selector: tuple[str, str]):
+                wait_for_element(selector).click()
+
+            def send_keys(selector: tuple[str, str], *keys: str):
+                wait_for_element(selector).send_keys(*keys)
+
+            def is_selected(selector: tuple[str, str]) -> bool:
+                return wait_for_element(selector).is_selected()
+            
+            def wait_until(selector: tuple[str, str], callable) -> bool:
+                wait_for_element(selector)
+                return wait.until(lambda driver: callable(driver.find_element(*selector)))
+            
+            try:
+                driver.get("https://www.tiktok.com/tiktokstudio/upload")
+                send_keys((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-3600237669.upload-container.flow-opt-ui > div > div > div > input"), file_to_upload)
+                
+                hashtags = self.generate_hashtags(info.get("comment").split(","))
+                tiktok_description = f"{info.get('title')}\n\n{info.get('description')}\n\n{info.get('album')}\n\n{' '.join(hashtags)}"
+                description_elem = wait_for_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-3026483946.caption-wrap-v2 > div > div.jsx-3804924985.caption-markup > div.jsx-3804924985.caption-editor > div > div > div > div > div > div > span > span"))
+                pc.copy(tiktok_description)
+                description_elem.click()
+                description_elem.send_keys(Keys.CONTROL, "a")
+                description_elem.send_keys(Keys.CONTROL, "v")
+                click_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-510587813 > div > div"))
+                click_element((By.CSS_SELECTOR, r"#\:r10\: > div > div.jsx-3186560874.cover-edit-header > div:nth-child(2)"))
+                send_keys((By.CSS_SELECTOR, r"#\:r10\: > div > div:nth-child(3) > div > input"), str(thumbnail_path)) if thumbnail_path else None
+                click_element((By.CSS_SELECTOR, r"#\:r10\: > div > div:nth-child(3) > div.jsx-2328539565.cover-edit-footer > button.TUXButton.TUXButton--default.TUXButton--medium.TUXButton--primary"))
+                click_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-3026483946.more-collapse.collapsed > div.jsx-3026483946.more-btn > span"))
+                if is_selected((By.CSS_SELECTOR, r"#\:r1d\:")):
+                    click_element((By.CSS_SELECTOR, r"#\:r1d\:"))
+                if is_selected((By.CSS_SELECTOR, r"#\:r1e\:")):
+                    click_element((By.CSS_SELECTOR, r"#\:r1e\:"))
+                if not is_selected((By.CSS_SELECTOR, r"#\:r1l\:")):
+                    click_element((By.CSS_SELECTOR, r"#\:r1l\:"))
+
+                wait_until((By.XPATH, "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div[1]/div[3]/div"), lambda span: span.text == "100%")
+                click_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-3026483946.button-group > button.TUXButton.TUXButton--default.TUXButton--large.TUXButton--primary"))
+                time.sleep(5)
+                if self.__verbose__:
+                    print("Uploaded to TikTok.")
+                driver.quit()
+            except Exception as e:
+                print(e)
+                error = True
 
         if self.__verbose__:
             print("Upload complete.") if not error else print("Upload failed.")
