@@ -98,7 +98,7 @@ class UploadAPI:
         )
         hashtags = tuple(
             map(
-                lambda keyword: f"#{keyword.lower().strip()}",
+                lambda keyword: f"#{keyword.lower().replace(" ", "").strip()}",
                 ",".join(keywords).strip().replace("#", "").split(","),
             )
         )
@@ -132,12 +132,13 @@ class UploadAPI:
                 )
             )[0],
         )
-        info = ffmpeg.probe(file_to_upload)["format"]["tags"]
+        info = self.__settings_manager__.get_metadata(self.__settings_manager__.get_video_path(session_id))
         error: bool = False
 
         if youtube:
             video_id = None
             def resumable_upload(insert_request):
+                nonlocal video_id
                 response = None
                 error = None
                 retry = 0
@@ -200,7 +201,7 @@ class UploadAPI:
 
                 tags = None
                 if info.get("comment"):
-                    tags = info.get("comment").replace("#", "").split(",")
+                    tags = info.get("comment").split(",") # type: ignore
 
                 body = dict(
                     snippet=dict(
@@ -359,7 +360,6 @@ class UploadAPI:
                     thumbnail_path = Path(default_thumbnail_path) if default_thumbnail_path else None
 
                 options = selenium.webdriver.ChromeOptions()
-                options.add_experimental_option("detach", True)
                 options.add_argument("--log-level=3")
                 options.add_argument(f"user-data-dir={self.__settings_manager__.chrome_profile_dir}")
                 options.add_experimental_option("excludeSwitches", ["enable-logging"])
@@ -393,7 +393,7 @@ class UploadAPI:
                 driver.get("https://www.tiktok.com/tiktokstudio/upload")
                 send_keys((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-3600237669.upload-container.flow-opt-ui > div > div > div > input"), file_to_upload)
                 
-                hashtags = self.generate_hashtags(info.get("comment").split(","))
+                hashtags = self.generate_hashtags(info.get("comment").split(","))  # type: ignore
                 tiktok_description = f"{info.get('title')}\n\n{info.get('description')}\n\n{info.get('album')}\n\n{' '.join(hashtags)}"
                 description_elem = wait_for_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-3026483946.caption-wrap-v2 > div > div.jsx-3804924985.caption-markup > div.jsx-3804924985.caption-editor > div > div > div > div > div > div > span > span"))
                 pc.copy(tiktok_description)

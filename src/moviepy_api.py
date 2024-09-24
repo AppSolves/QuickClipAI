@@ -157,8 +157,8 @@ class BensoundBackgroundMusic(BackgroundMusic):
         wait.until(EC.presence_of_element_located(credit_finder))
         wait.until(lambda driver: driver.find_element(*credit_finder).text)
         credit = driver.find_element(*credit_finder).text
-        if not credit:
-            raise ValueError("Failed to get credit for Bensound track!")
+        if not credit or "Sorry we encounter an issue" in credit:
+            raise BensoundDownloadError(track_name)
 
         while not any(file.endswith(".mp3") for file in os.listdir(self.bensound_dir)):
             time.sleep(1)

@@ -201,12 +201,17 @@ def generate(
     ).content  # type: ignore
     video_title, video_description, video_hashtags = tuple(
         map(
-            lambda string: (
-                tuple(map(str.strip, string.split(",")))
-                if "#" in string
-                else string.strip()
+            lambda info: (
+                tuple(
+                    map(
+                        lambda tag: tag.strip().replace("#", ""),
+                        info[1].split(","),
+                    )
+                )
+                if info[0] == 2
+                else info[1].strip()
             ),
-            [info for info in video_info.split("\n") if info],
+            enumerate([info for info in video_info.split("\n") if info]),
         )
     )
 
@@ -346,12 +351,17 @@ def regenerate(
         video_info = [line for line in f.readlines() if line.strip()]
     video_title, video_description, video_hashtags = tuple(
         map(
-            lambda string: (
-                tuple(map(str.strip, string.split(",")))
-                if "#" in string
-                else string.strip()
+            lambda info: (
+                tuple(
+                    map(
+                        lambda tag: tag.strip().replace("#", ""),
+                        info[1].split(","),
+                    )
+                )
+                if info[0] == 2
+                else info[1].strip()
             ),
-            video_info,
+            enumerate(video_info),
         )
     )
 
