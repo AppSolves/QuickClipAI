@@ -216,22 +216,22 @@ def generate(
     )
 
     background_musics = [
-        BackgroundMusic(
+        lambda: BackgroundMusic(
             r"D:\Hobbys\YouTube\CurioBurstz\Assets\background_music_1.mp3",
             volume_factor=0.1,
             credits="\nSong: Sappheiros - Lights (Vlog No Copyright Music)\nMusic promoted by Vlog No Copyright Music.\nVideo Link: https://youtu.be/kzeQK45StRo\n",
         ),
-        BackgroundMusic(
+        lambda: BackgroundMusic(
             r"D:\Hobbys\YouTube\CurioBurstz\Assets\background_music_2.mp3",
             volume_factor=0.1,
             credits="\nSong: Chill Day - LAKEY INSPIRED\nLink: https://soundcloud.com/lakeyinspired/chill-day\nLicense: Creative Commons Attribution-ShareAlike 3.0\nLicense Link: https://creativecommons.org/licenses/by-sa/3.0/\n",
         ),
-        BensoundBackgroundMusic(
+        lambda: BensoundBackgroundMusic(
             "the lounge",
             volume_factor=0.2,
         ),
     ]
-    background_music = rd.choice(background_musics)
+    background_music = rd.choice(background_musics)()
     moviepy_api.generate_video(
         audio_paths=[
             os.path.join(elevenlabs_api.output_dir, audio)
@@ -366,22 +366,22 @@ def regenerate(
     )
 
     background_musics = [
-        BackgroundMusic(
+        lambda: BackgroundMusic(
             r"D:\Hobbys\YouTube\CurioBurstz\Assets\background_music_1.mp3",
             volume_factor=0.1,
             credits="\nSong: Sappheiros - Lights (Vlog No Copyright Music)\nMusic promoted by Vlog No Copyright Music.\nVideo Link: https://youtu.be/kzeQK45StRo\n",
         ),
-        BackgroundMusic(
+        lambda: BackgroundMusic(
             r"D:\Hobbys\YouTube\CurioBurstz\Assets\background_music_2.mp3",
             volume_factor=0.1,
             credits="\nSong: Chill Day - LAKEY INSPIRED\nLink: https://soundcloud.com/lakeyinspired/chill-day\nLicense: Creative Commons Attribution-ShareAlike 3.0\nLicense Link: https://creativecommons.org/licenses/by-sa/3.0/\n",
         ),
-        BensoundBackgroundMusic(
+        lambda: BensoundBackgroundMusic(
             "the lounge",
             volume_factor=0.3,
         ),
     ]
-    background_music = rd.choice(background_musics)
+    background_music = rd.choice(background_musics)()
     moviepy_api.generate_video(
         audio_paths=[
             os.path.join(elevenlabs_api.output_dir, audio)
