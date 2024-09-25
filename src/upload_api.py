@@ -137,6 +137,7 @@ class UploadAPI:
 
         if youtube:
             video_id = None
+
             def resumable_upload(insert_request):
                 nonlocal video_id
                 response = None
@@ -148,11 +149,12 @@ class UploadAPI:
                             print("Uploading file to YouTube...")
                         _, response = insert_request.next_chunk()
                         if response is not None:
-                            if "id" in response and self.__verbose__:
-                                print(
-                                    "Video id '%s' was successfully uploaded."
-                                    % response["id"]
-                                )
+                            if "id" in response:
+                                if self.__verbose__:
+                                    print(
+                                        "Video id '%s' was successfully uploaded."
+                                        % response["id"]
+                                    )
                                 video_id = response["id"]
                             else:
                                 if self.__verbose__:
@@ -197,8 +199,7 @@ class UploadAPI:
                             % (e.resp.status, e.content)
                         )
 
-            def initialize_upload(youtube):
-
+            def initialize_upload(youtube_instance):
                 tags = None
                 if info.get("comment"):
                     tags = info.get("comment").split(",") # type: ignore
@@ -214,7 +215,7 @@ class UploadAPI:
                 )
 
                 # Call the API's videos.insert method to create and upload the video.
-                insert_request = youtube.videos().insert(
+                insert_request = youtube_instance.videos().insert(
                     part=",".join(body.keys()),
                     body=body,
                     media_body=MediaFileUpload(
@@ -225,7 +226,10 @@ class UploadAPI:
 
                 resumable_upload(insert_request)
 
-            def insert_thumbnail():
+            def insert_thumbnail(youtube_instance):
+                if not video_id:
+                    return
+
                 nonlocal thumbnail_path
                 if not thumbnail_path:
                     default_thumbnail_path = os.path.join(
@@ -244,16 +248,15 @@ class UploadAPI:
                     ) if available_thumbnails else None
                     thumbnail_path = Path(default_thumbnail_path) if default_thumbnail_path else None
 
-                youtube = self.authenticated_service
-                youtube.thumbnails().set(
+                youtube_instance.thumbnails().set(
                     videoId=video_id,
                     media_body=MediaFileUpload(str(thumbnail_path)),
                 ).execute()
 
             try:
-                youtube = self.authenticated_service
-                initialize_upload(youtube)
-                insert_thumbnail() if video_id else None
+                youtube_instance = self.authenticated_service
+                initialize_upload(youtube_instance)
+                insert_thumbnail(youtube_instance)
                 if self.__verbose__:
                     print("Video uploaded to YouTube.")
             except Exception as e:
