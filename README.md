@@ -82,9 +82,11 @@ settings_manager.set(
 
 4. **Install `ffmpeg`**: Download and install `ffmpeg` from the [official website](https://ffmpeg.org/download.html). Make sure to add the binary to your system's `PATH` variable.
 
-5. **Install `ImageMagick`**: Download and install `ImageMagick` from the [official website](https://imagemagick.org/script/download.php) as well. Make sure to tick both boxes that add the binary to your system's `PATH` variable and install the legacy utilities.
+5. **Install `ImageMagick`**: Download and install `ImageMagick` from the [official website](https://imagemagick.org/script/download.php) as well. Make sure to tick both boxes that
+- add the binary to your system's `PATH` variable.
+- install the legacy utilities (e.g. `convert.exe`).
 
-6. **Install `Chrome`**: `Chrome` and `ChromeDriver` are necessary if you would like to use background music from [Bensound](https://www.bensound.com) (refer to the `BensoundBackgroundMusic` class) or make automatic uploads to [Instagram](https://instagram.com). Make sure to download the latest version of [Chrome](https://www.google.com/chrome/) and the [ChromeDriver](https://googlechromelabs.github.io/chrome-for-testing/#stable) respectively. Make sure to add the `ChromeDriver` binary to your system's `PATH` variable.
+6. **Install `Chrome`**: `Chrome` and `ChromeDriver` are necessary if you would like to use background music from [Bensound](https://www.bensound.com) (refer to the `BensoundBackgroundMusic` class) or make automatic uploads to [Instagram](https://instagram.com) and [TikTok](https://tiktok.com). Make sure to download the latest version of [Chrome](https://www.google.com/chrome/) and the [ChromeDriver](https://googlechromelabs.github.io/chrome-for-testing/#stable) respectively. Make sure to add the `ChromeDriver` binary to your system's `PATH` variable.
 
 ### Providers and API setup 🌐
 1. You need to obtain an API key from [ElevenLabs](https://elevenlabs.io) (they have a free plan) to be able to generate automatic voiceovers. You can set this key in the same `.env` file as above by adding the `ELEVENLABS_API_KEY` key or by setting it using the `SettingsManager` class:
@@ -95,7 +97,7 @@ settings_manager.set(
 settings_manager = SettingsManager()
 settings_manager.set(
     "elevenlabs_api_key",
-    "your_api_key",
+    "<your_api_key>",
     encrypt=True, # Encryption is recommended for sensitive data.
 )
 ```
