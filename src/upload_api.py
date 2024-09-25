@@ -156,6 +156,7 @@ class UploadAPI:
                                         % response["id"]
                                     )
                                 video_id = response["id"]
+                                return True
                             else:
                                 if self.__verbose__:
                                     print("The upload failed with an unexpected response.")
@@ -188,16 +189,6 @@ class UploadAPI:
                                 % sleep_seconds
                             )
                         time.sleep(sleep_seconds)
-
-                youtube = self.authenticated_service
-                try:
-                    initialize_upload(youtube)
-                except HttpError as e:
-                    if self.__verbose__:
-                        print(
-                            "An HTTP error %d occurred:\n%s"
-                            % (e.resp.status, e.content)
-                        )
 
             def initialize_upload(youtube_instance):
                 tags = None
@@ -406,6 +397,7 @@ class UploadAPI:
                 click_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-510587813 > div > div"))
                 click_element((By.CSS_SELECTOR, r"#\:r10\: > div > div.jsx-3186560874.cover-edit-header > div:nth-child(2)"))
                 send_keys((By.CSS_SELECTOR, r"#\:r10\: > div > div:nth-child(3) > div > input"), str(thumbnail_path)) if thumbnail_path else None
+                time.sleep(1)
                 click_element((By.CSS_SELECTOR, r"#\:r10\: > div > div:nth-child(3) > div.jsx-2328539565.cover-edit-footer > button.TUXButton.TUXButton--default.TUXButton--medium.TUXButton--primary"))
                 click_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-3026483946.more-collapse.collapsed > div.jsx-3026483946.more-btn > span"))
                 if is_selected((By.CSS_SELECTOR, r"#\:r1d\:")):
