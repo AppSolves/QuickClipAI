@@ -236,8 +236,12 @@ This project was developed and is maintained by [AppSolves](https://github.com/A
 
 #### Links
 
+- [E-Mail](mailto:contact@appsolves.dev)
 - [Website](https://appsolves.dev)
-- [Repository](https://github.com/AppSolves/QuickClipAI)
+- [GitHub](https://github.com/AppSolves)
+- [This Repository](https://github.com/AppSolves/QuickClipAI)
+
+Also, check out `CurioBurstz` on [YouTube](https://www.youtube.com/@curioburstz?sub_confirmation=1), [Instagram](https://www.instagram.com/curioburstz/), and [TikTok](https://www.tiktok.com/@curioburstz) for more content created using `QuickClipAI`.
 
 ## License 📜
 This project is licensed under a custom license with **All Rights Reserved**.  
