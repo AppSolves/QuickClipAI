@@ -53,6 +53,17 @@ build_app = typer.Typer(
     },
     rich_help_panel="Video: Management",
 )
+settings_app = typer.Typer(
+    name="settings, config",
+    help="[purple]Manage[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
+    rich_markup_mode="rich",
+    cls=AliasGroup,
+    context_settings={
+        "help_option_names": ["-h", "--help", "-?"],
+    },
+    rich_help_panel="Settings: Configuration",
+)
+app.add_typer(settings_app, name="settings", rich_help_panel="Video: Configuration")
 app.add_typer(build_app, name="build", rich_help_panel="Video: Management")
 app.add_typer(topics_app, name="topics", rich_help_panel="Video: Information")
 
@@ -986,6 +997,102 @@ def thumbnails(
 
         if show:
             os.system(f'start "" "{thumbnail_dir}"')
+
+
+@settings_app.command(
+    name="show, display",
+    help="[purple]Show[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
+    rich_help_panel="Settings: Information",
+)
+def show_settings():
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    typer.echo("Settings:\n")
+    typer.echo(json.dumps(settings_manager.config, indent=4))
+
+
+@settings_app.command(
+    name="set",
+    help="[purple]Set[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
+    rich_help_panel="Settings: Configuration",
+)
+def set_settings(
+    key: Annotated[
+        str,
+        typer.Argument(
+            ...,
+            help="Specify the [purple]key[/purple] to set the value for. :key:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ],
+    value: Annotated[
+        str,
+        typer.Argument(
+            ...,
+            help="Specify the [purple]value[/purple] to set for the key. :1234:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ],
+    encrypt: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--encrypt",
+            "-e",
+            help="Specify whether or not to encrypt the value. :lock:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = False,
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    settings_manager.set(key=key, value=value, encrypt=encrypt)
+    if is_verbose:
+        typer.echo(f"Set key '{key}' to value '{value}'.")
+
+
+@settings_app.command(
+    name="delete, remove",
+    help="[purple]Delete[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :wastebasket:",
+    rich_help_panel="Settings: Configuration",
+)
+def delete_settings(
+    key: Annotated[
+        str,
+        typer.Argument(
+            ...,
+            help="Specify the [purple]key[/purple] to delete the value for. :key:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ],
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    settings_manager.delete(key=key)
+    if is_verbose:
+        typer.echo(f"Deleted key '{key}'.")
+
+
+@settings_app.command(
+    name="get",
+    help="[purple]Get[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
+    rich_help_panel="Settings: Information",
+)
+def get_settings(
+    key: Annotated[
+        str,
+        typer.Argument(
+            ...,
+            help="Specify the [purple]key[/purple] to get the value for. :key:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ],
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    value = settings_manager.get(key=key)
+    typer.echo(f"Value for key '{key}': {value}")
 
 
 if __name__ == "__main__":

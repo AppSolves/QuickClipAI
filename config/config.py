@@ -328,6 +328,10 @@ class SettingsManager:
         ]
 
     @property
+    def config(self) -> dict:
+        return self.__config__
+
+    @property
     def session_id(self) -> str:
         return self.__session_id__
 

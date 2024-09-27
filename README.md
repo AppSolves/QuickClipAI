@@ -102,6 +102,12 @@ settings_manager.set(
 )
 ```
 
+You can also set the API key using the command line interface (`CLI`) as follows (better for shorter data):
+
+```bash
+python main.py settings set "elevenlabs_api_key" "<your_api_key>" -e
+```
+
 2. In order to generate text, the `G4FAPI` uses `g4f.Provider.OpenaiChat` as the default provider. You can change this by passing a custom provider to the `G4FAPI` class. The setup of `.har` files is necessary for authentication. You can set these files in the `config/har_and_cookies` directory and the `G4FAPI` class will automatically use them:
 
 > ⚠️ **IMPORTANT**: In order to function correctly, some providers, e.g. "you.com", require cookies to be set. You can set these cookies by generating a `.har` file for the provider's website using your browser's developer tools and placing it in the `config/har_and_cookies` directory. If `ENCRYPTION_KEY` is set, the `.har` file will be encrypted when the program is run for the first time and only decrypted during runtime.
