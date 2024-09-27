@@ -65,7 +65,7 @@ thumbnails_app = typer.Typer(
 )
 settings_app = typer.Typer(
     name="settings, config",
-    help="[purple]Manage[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
+    help="[purple]Manage[/purple] the [bold cyan]beautiful[/bold cyan] app settings. :gear:",
     rich_markup_mode="rich",
     cls=AliasGroup,
     context_settings={
@@ -904,7 +904,7 @@ def hashtags(
 
 
 @app.command(
-    name="show, play",
+    name="show, play, preview",
     help="[purple]Show[/purple] the [bold cyan]beautiful[/bold cyan] video. :tv:",
     rich_help_panel="Video: Preview",
 )
@@ -936,7 +936,7 @@ def show(
 
 
 @thumbnails_app.command(
-    name="show, display",
+    name="show, display, preview",
     help="[purple]Show[/purple] the [bold cyan]thumbnails[/bold cyan] for the current session in the file explorer. :frame_photo:",
     rich_help_panel="Video: Preview",
 )
@@ -1081,7 +1081,7 @@ def get_thumbnail(
 
 @settings_app.command(
     name="show, display",
-    help="[purple]Show[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
+    help="[purple]Show[/purple] the [bold cyan]beautiful[/bold cyan] app settings. :gear:",
     rich_help_panel="Settings: Information",
 )
 def show_settings():
@@ -1092,7 +1092,7 @@ def show_settings():
 
 @settings_app.command(
     name="set",
-    help="[purple]Set[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
+    help="[purple]Set[/purple] the [bold cyan]beautiful[/bold cyan] app settings. :gear:",
     rich_help_panel="Settings: Configuration",
 )
 def set_settings(
@@ -1134,7 +1134,7 @@ def set_settings(
 
 @settings_app.command(
     name="delete, remove",
-    help="[purple]Delete[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :wastebasket:",
+    help="[purple]Delete[/purple] the [bold cyan]beautiful[/bold cyan] app settings. :wastebasket:",
     rich_help_panel="Settings: Configuration",
 )
 def delete_settings(
@@ -1156,7 +1156,7 @@ def delete_settings(
 
 @settings_app.command(
     name="get",
-    help="[purple]Get[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
+    help="[purple]Get[/purple] the [bold cyan]beautiful[/bold cyan] app settings. :gear:",
     rich_help_panel="Settings: Information",
 )
 def get_settings(
