@@ -197,7 +197,7 @@ def generate(
 
     video_info = g4f_api.get_response(
         Message(MessageSender.USER, prompt_manager.get_prompt("video_info")),
-        save_response=f"video_info.txt",
+        save_response="video_info.txt",
     ).content  # type: ignore
     video_title, video_description, video_hashtags = tuple(
         map(
@@ -343,27 +343,84 @@ def regenerate(
     fooocus_api = FooocusAPI(verbose=is_verbose)
     moviepy_api = MoviepyAPI(verbose=is_verbose)
 
-    with open(
-        os.path.join(settings_manager.build_dir, "responses", "video_info.txt"),
-        "r",
-        encoding="utf-8",
-    ) as f:
-        video_info = [line for line in f.readlines() if line.strip()]
-    video_title, video_description, video_hashtags = tuple(
-        map(
-            lambda info: (
-                tuple(
-                    map(
-                        lambda tag: tag.strip().replace("#", ""),
-                        info[1].split(","),
-                    )
-                )
-                if info[0] == 2
-                else info[1].strip()
-            ),
-            enumerate(video_info),
+    if not os.listdir(elevenlabs_api.output_dir) or not os.listdir(
+        fooocus_api.output_dir
+    ):
+        typer.echo("No build assets found.")
+        raise typer.Exit(code=1)
+
+    if not os.path.isfile(
+        os.path.join(settings_manager.build_dir, "responses", "video_info.txt")
+    ):
+        with open(
+            os.path.join(settings_manager.build_dir, "responses", "voiceover.txt"),
+            "r",
+            encoding="utf-8",
+        ) as f:
+            voiceover = "\n".join([line for line in f.readlines() if line.strip()])
+
+        with open(
+            os.path.join(settings_manager.build_dir, "responses", "pictureprompts.txt"),
+            "r",
+            encoding="utf-8",
+        ) as f:
+            picture_prompts = "\n".join(
+                [line for line in f.readlines() if line.strip()]
+            )
+
+        g4f_api = G4FAPI(verbose=is_verbose)
+        prompt_manager = PromptManager()
+        g4f_api.add_message(
+            Message(MessageSender.USER, prompt_manager.get_prompt("video_idea")),
         )
-    )
+        g4f_api.add_message(Message(MessageSender.ASSISTANT, voiceover))
+        g4f_api.add_message(
+            Message(
+                MessageSender.USER, prompt_manager.get_prompt("picture_generation")
+            ),
+        )
+        g4f_api.add_message(Message(MessageSender.ASSISTANT, picture_prompts))
+        video_info = g4f_api.get_response(
+            Message(MessageSender.USER, prompt_manager.get_prompt("video_info")),
+            save_response="video_info.txt",
+        ).content  # type: ignore
+        video_title, video_description, video_hashtags = tuple(
+            map(
+                lambda info: (
+                    tuple(
+                        map(
+                            lambda tag: tag.strip().replace("#", ""),
+                            info[1].split(","),
+                        )
+                    )
+                    if info[0] == 2
+                    else info[1].strip()
+                ),
+                enumerate([info for info in video_info.split("\n") if info]),
+            )
+        )
+    else:
+        with open(
+            os.path.join(settings_manager.build_dir, "responses", "video_info.txt"),
+            "r",
+            encoding="utf-8",
+        ) as f:
+            video_info = [line for line in f.readlines() if line.strip()]
+        video_title, video_description, video_hashtags = tuple(
+            map(
+                lambda info: (
+                    tuple(
+                        map(
+                            lambda tag: tag.strip().replace("#", ""),
+                            info[1].split(","),
+                        )
+                    )
+                    if info[0] == 2
+                    else info[1].strip()
+                ),
+                enumerate(video_info),
+            )
+        )
 
     background_musics = [
         lambda: BackgroundMusic(

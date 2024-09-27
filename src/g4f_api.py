@@ -146,6 +146,12 @@ class G4FAPI:
             if as_dict
             else [Message.from_dict(message) for message in self.__messages__]
         )
+    
+    def add_message(self, message: Message) -> None:
+        self.__messages__.append(message.to_dict())
+
+    def clear_messages(self) -> None:
+        self.__messages__ = []
 
     def get_response(self, message: Message, as_str: bool = False, retries: int = 0, save_response: str | None = None) -> Message | str:
         if not message.sender == MessageSender.USER:
