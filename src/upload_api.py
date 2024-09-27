@@ -389,7 +389,7 @@ class UploadAPI:
                 
                 hashtags = self.generate_hashtags(info.get("comment").split(","))  # type: ignore
                 tiktok_description = f"{info.get('title')}\n\n{info.get('description')}\n\n{info.get('album')}\n\n{' '.join(hashtags)}"
-                description_elem = wait_for_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-3026483946.caption-wrap-v2 > div > div.jsx-3804924985.caption-markup > div.jsx-3804924985.caption-editor > div > div > div > div > div > div > span > span"))
+                description_elem = wait_for_element((By.CSS_SELECTOR, 'span[data-text="true"]'))
                 pc.copy(tiktok_description)
                 description_elem.click()
                 description_elem.send_keys(Keys.CONTROL, "a")
