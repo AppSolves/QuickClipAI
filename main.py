@@ -53,6 +53,16 @@ build_app = typer.Typer(
     },
     rich_help_panel="Video: Management",
 )
+thumbnails_app = typer.Typer(
+    name="thumbnails, pics",
+    help="[purple]Manage[/purple] the [bold cyan]beautiful[/bold cyan] video thumbnails. :frame_photo:",
+    rich_markup_mode="rich",
+    cls=AliasGroup,
+    context_settings={
+        "help_option_names": ["-h", "--help", "-?"],
+    },
+    rich_help_panel="Video: Preview",
+)
 settings_app = typer.Typer(
     name="settings, config",
     help="[purple]Manage[/purple] the [bold cyan]beautiful[/bold cyan] video settings. :gear:",
@@ -63,6 +73,7 @@ settings_app = typer.Typer(
     },
     rich_help_panel="Settings: Configuration",
 )
+app.add_typer(thumbnails_app, name="thumbnails", rich_help_panel="Video: Preview")
 app.add_typer(settings_app, name="settings", rich_help_panel="Video: Configuration")
 app.add_typer(build_app, name="build", rich_help_panel="Video: Management")
 app.add_typer(topics_app, name="topics", rich_help_panel="Video: Information")
@@ -924,12 +935,12 @@ def show(
     os.system(f'start "" "{video_path}"')
 
 
-@app.command(
-    name="thumbnails, pics",
-    help="[purple]Show[/purple] the [bold cyan]thumbnails[/bold cyan] for the current session. :tv:",
+@thumbnails_app.command(
+    name="show, display",
+    help="[purple]Show[/purple] the [bold cyan]thumbnails[/bold cyan] for the current session in the file explorer. :frame_photo:",
     rich_help_panel="Video: Preview",
 )
-def thumbnails(
+def show_thumbnails(
     session_id: Annotated[
         Optional[str],
         typer.Option(
@@ -941,17 +952,6 @@ def thumbnails(
             rich_help_panel="Options: Configuration",
         ),
     ] = None,
-    show: Annotated[
-        bool,
-        typer.Option(
-            ...,
-            "--show",
-            "-s",
-            help="Specify whether or not to show the thumbnails in the file explorer. :file_folder:",
-            show_default=False,
-            rich_help_panel="Options: Configuration",
-        ),
-    ] = False,
     by_index: Annotated[
         Optional[int],
         typer.Option(
@@ -987,16 +987,96 @@ def thumbnails(
             thumbnail_dir,
             os.listdir(thumbnail_dir)[by_index],
         )
-        typer.echo(thumbnail_path)
-        if show:
-            os.system(f'start "" "{thumbnail_path}"')
+        typer.echo("Thumbnail Path:\n")
+        typer.echo(f'"{thumbnail_path}"')
+        os.system(f'start "" "{thumbnail_path}"')
     else:
-        typer.echo("Thumbnail Paths:")
+        typer.echo("Thumbnail Paths:\n")
         for index, thumbnail in enumerate(os.listdir(thumbnail_dir)):
             typer.echo(f'{index + 1}. "{os.path.join(thumbnail_dir, thumbnail)}"')
 
-        if show:
-            os.system(f'start "" "{thumbnail_dir}"')
+        os.system(f'start "" "{thumbnail_dir}"')
+
+
+@thumbnails_app.command(
+    name="get, select",
+    help="[purple]Get[/purple] the [bold cyan]thumbnail[/bold cyan] for the current session. :frame_photo:",
+    rich_help_panel="Video: Information",
+)
+def get_thumbnail(
+    session_id: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--session-id",
+            "-sid",
+            help="Specify the video's [purple]session ID[/purple] to get the thumbnail. :id:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = None,
+    by_index: Annotated[
+        Optional[int],
+        typer.Option(
+            ...,
+            "--by-index",
+            "-bi",
+            help="Specify the [purple]index[/purple] of the thumbnail to get (random if '-1'). :1234:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = None,
+    raw: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--raw",
+            "-r",
+            help="Specify whether or not to get the raw thumbnail path. :frame_photo:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = False,
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    session_id = session_id or settings_manager.last_session_id
+    if not session_id or not settings_manager.session_exists(
+        SessionID.explicit(session_id)
+    ):
+        typer.echo(
+            "No session ID found. Please provide a session ID to get the thumbnail."
+        )
+        raise typer.Exit(code=1)
+    if not raw:
+        typer.echo(f"Session UID: {session_id}")
+    thumbnail_dir = os.path.join(
+        settings_manager.build_dir_for_session(session_id),
+        "pictures",
+    )
+    if not os.path.exists(thumbnail_dir) or not os.listdir(thumbnail_dir):
+        typer.echo("No thumbnails found.")
+        raise typer.Exit(code=1)
+
+    if by_index is not None:
+        if by_index < 0 or by_index >= len(os.listdir(thumbnail_dir)):
+            by_index = rd.randint(0, len(os.listdir(thumbnail_dir)) - 1)
+        thumbnail_path = os.path.join(
+            thumbnail_dir,
+            os.listdir(thumbnail_dir)[by_index],
+        )
+        if raw:
+            typer.echo(thumbnail_path)
+        else:
+            typer.echo("Thumbnail Path:\n")
+            typer.echo(f'"{thumbnail_path}"')
+    else:
+        if raw:
+            for index, thumbnail in enumerate(os.listdir(thumbnail_dir)):
+                typer.echo(os.path.join(thumbnail_dir, thumbnail))
+        else:
+            typer.echo("Thumbnail Paths:\n")
+            for index, thumbnail in enumerate(os.listdir(thumbnail_dir)):
+                typer.echo(f'{index + 1}. "{os.path.join(thumbnail_dir, thumbnail)}"')
 
 
 @settings_app.command(
