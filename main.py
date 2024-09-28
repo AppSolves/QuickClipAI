@@ -758,6 +758,45 @@ def open_build_dir(
 
 
 @build_app.command(
+    name="list, ls",
+    help="[purple]List[/purple] the [bold cyan]beautiful[/bold cyan] video build directory. :scroll:",
+    rich_help_panel="Video: Information",
+)
+def list_build_dir(
+    session_id: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--session-id",
+            "-sid",
+            help="Specify the video's [purple]session ID[/purple] to list the build directory. :id:",
+            show_default=False,
+            rich_help_panel="Options: Configuration",
+        ),
+    ] = None,
+):
+    settings_manager = SettingsManager(session_id=SessionID.TEMP, verbose=is_verbose)
+    session_id = session_id or settings_manager.last_session_id
+    if not session_id or not settings_manager.session_exists(
+        SessionID.explicit(session_id)
+    ):
+        typer.echo(
+            "No session ID found. Please provide a session ID to list the build directory."
+        )
+        raise typer.Exit(code=1)
+    typer.echo(f"Session UID: {session_id}")
+    path_to_list = settings_manager.build_dir_for_session(session_id)
+    if not os.path.exists(path_to_list):
+        typer.echo("No build directory found.")
+        raise typer.Exit(code=1)
+
+    if os.name == "nt":
+        os.system(f'tree "{path_to_list}" /F')
+    else:
+        os.system(f'ls -R "{path_to_list}"')
+
+
+@build_app.command(
     name="delete, remove",
     help="[purple]Delete[/purple] the [bold cyan]beautiful[/bold cyan] video build directory. :wastebasket:",
     rich_help_panel="Video: Management",
