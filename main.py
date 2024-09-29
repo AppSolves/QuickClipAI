@@ -7,6 +7,7 @@ import traceback
 from pathlib import Path
 from typing import Annotated, Optional
 
+import captametropolis
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -374,21 +375,42 @@ def regenerate(
     if not os.path.isfile(
         os.path.join(settings_manager.build_dir, "responses", "video_info.txt")
     ):
-        with open(
-            os.path.join(settings_manager.build_dir, "responses", "voiceover.txt"),
-            "r",
-            encoding="utf-8",
-        ) as f:
-            voiceover = "\n".join([line for line in f.readlines() if line.strip()])
+        try:
+            with open(
+                os.path.join(settings_manager.build_dir, "responses", "voiceover.txt"),
+                "r",
+                encoding="utf-8",
+            ) as f:
+                voiceover = "\n".join([line for line in f.readlines() if line.strip()])
 
-        with open(
-            os.path.join(settings_manager.build_dir, "responses", "pictureprompts.txt"),
-            "r",
-            encoding="utf-8",
-        ) as f:
-            picture_prompts = "\n".join(
-                [line for line in f.readlines() if line.strip()]
-            )
+            with open(
+                os.path.join(
+                    settings_manager.build_dir, "responses", "pictureprompts.txt"
+                ),
+                "r",
+                encoding="utf-8",
+            ) as f:
+                picture_prompts = "\n".join(
+                    [line for line in f.readlines() if line.strip()]
+                )
+        except FileNotFoundError:
+            if not os.listdir(elevenlabs_api.output_dir):
+                typer.echo("No voiceover found.")
+                raise typer.Exit(code=1)
+
+            voiceover = ""
+            with open(
+                os.path.join(settings_manager.build_dir, "responses", "voiceover.txt"),
+                "w",
+                encoding="utf-8",
+            ) as f:
+                for audio in os.listdir(elevenlabs_api.output_dir):
+                    segments = captametropolis.transcriber.transcribe_locally(
+                        os.path.join(elevenlabs_api.output_dir, audio)
+                    )
+                    for segment in segments:
+                        f.write(segment["text"] + "\n")  # type: ignore
+                        voiceover += segment["text"] + "\n"  # type: ignore
 
         g4f_api = G4FAPI(verbose=is_verbose)
         prompt_manager = PromptManager()
