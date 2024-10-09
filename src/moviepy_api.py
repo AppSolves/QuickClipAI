@@ -127,36 +127,34 @@ class BensoundBackgroundMusic(BackgroundMusic):
             options.add_argument("--disable-search-engine-choice-screen")
             driver = selenium.webdriver.Chrome(options=options)
             driver.maximize_window()
+            errors = [NoSuchElementException, ElementNotInteractableException]
+            wait = WebDriverWait(
+                driver, timeout=5, poll_frequency=0.2, ignored_exceptions=errors
+            )
         except NoSuchDriverException as e:
             print("Please install the Chrome WebDriver to use Bensound!")
             raise e
 
-        errors = [NoSuchElementException, ElementNotInteractableException]
-        wait = WebDriverWait(
-            driver,
-            timeout=5,
-            poll_frequency=0.2,
-            ignored_exceptions=errors,
-        )
+        def wait_for_element(selector: tuple[str, str]):
+            wait.until(EC.presence_of_element_located(selector))
+            return driver.find_element(*selector)
+
+        def click_element(selector: tuple[str, str]):
+            wait_for_element(selector).click()
+
+        def wait_until(selector: tuple[str, str], callable) -> bool:
+            wait_for_element(selector)
+            return wait.until(lambda driver: callable(driver.find_element(*selector)))
+
         driver.get(url)
-        driver.find_element(
-            By.XPATH, "/html/body/div[5]/main/div[3]/div[4]/div[1]/button"
-        ).click()
-        wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, "/html/body/div[6]/div[2]/div/div[3]/div[3]/button")
-            )
-        )
-        driver.find_element(
-            By.XPATH, "/html/body/div[6]/div[2]/div/div[3]/div[3]/button"
-        ).click()
+        click_element((By.XPATH, "/html/body/div[7]/main/div[3]/div[4]/div[1]/button"))
+        click_element((By.XPATH, "/html/body/div[8]/div[2]/div/div[3]/div[3]/button"))
         credit_finder = (
             By.CSS_SELECTOR,
             "#thanks-for-downloading > div:nth-child(2) > div.tip-text-downloading > div > div.attribution.is-flex.is-flex-direction-column.mt-5.is-clickable > div.orfium-code-wrapper.is-flex.is-justify-content-space-between.is-align-items-center > div.is-flex.is-flex-direction-column",
         )
-        wait.until(EC.presence_of_element_located(credit_finder))
-        wait.until(lambda driver: driver.find_element(*credit_finder).text)
-        credit = driver.find_element(*credit_finder).text
+        wait_until(credit_finder, lambda element: element.text)
+        credit = wait_for_element(credit_finder).text
         if not credit or "Sorry we encounter an issue" in credit:
             raise BensoundDownloadError(track_name)
 
