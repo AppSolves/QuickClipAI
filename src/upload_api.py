@@ -14,9 +14,11 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
-from selenium.common.exceptions import (ElementNotInteractableException,
-                                        NoSuchDriverException,
-                                        NoSuchElementException)
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    NoSuchDriverException,
+    NoSuchElementException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -28,11 +30,14 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 MAX_RETRIES = 10
 httplib2.RETRIES = 1
 
+
 @Singleton
 class UploadAPI:
     def __init__(self, verbose: bool = False):
         self.__verbose__ = verbose
-        self.__settings_manager__ = SettingsManager(session_id=SessionID.TEMP, verbose=verbose)
+        self.__settings_manager__ = SettingsManager(
+            session_id=SessionID.TEMP, verbose=verbose
+        )
 
     @classproperty
     def authenticated_service(cls):
@@ -66,14 +71,14 @@ class UploadAPI:
                 youtube_credentials = settings_manager.get("publisher", {}).get("youtube", None)  # type: ignore
                 if not youtube_credentials:
                     raise Exception("No YouTube credentials found.")
-                flow = InstalledAppFlow.from_client_config(
-                    youtube_credentials, SCOPES
-                )
+                flow = InstalledAppFlow.from_client_config(youtube_credentials, SCOPES)
                 credentials = flow.run_local_server()
-        
-        settings_manager.set("youtube_auth_session", credentials.to_json(), encrypt=True)
+
+        settings_manager.set(
+            "youtube_auth_session", credentials.to_json(), encrypt=True
+        )
         return build("youtube", "v3", credentials=credentials)
-    
+
     @staticmethod
     def generate_hashtags(keywords: list[str]) -> tuple[str, ...]:
         always_include = (
@@ -105,10 +110,19 @@ class UploadAPI:
         hashtags = tuple(set(hashtags + always_include))
         return hashtags
 
-    def upload(self, session_id: str, youtube: bool, instagram: bool, tiktok: bool, thumbnail_path: Path | None = None) -> bool:
+    def upload(
+        self,
+        session_id: str,
+        youtube: bool,
+        instagram: bool,
+        tiktok: bool,
+        thumbnail_path: Path | None = None,
+    ) -> bool:
         if self.__verbose__:
             print(
-                f"Uploading video to {'YouTube, ' if youtube else ''}{'Instagram, ' if instagram else ''}{'TikTok' if tiktok else ''}.".strip(", .")
+                f"Uploading video to {'YouTube, ' if youtube else ''}{'Instagram, ' if instagram else ''}{'TikTok' if tiktok else ''}.".strip(
+                    ", ."
+                )
             )
 
         def file_filter(file) -> bool:
@@ -132,7 +146,9 @@ class UploadAPI:
                 )
             )[0],
         )
-        info = self.__settings_manager__.get_metadata(self.__settings_manager__.get_video_path(session_id))
+        info = self.__settings_manager__.get_metadata(
+            self.__settings_manager__.get_video_path(session_id)
+        )
         error: bool = False
 
         if youtube:
@@ -159,7 +175,9 @@ class UploadAPI:
                                 return True
                             else:
                                 if self.__verbose__:
-                                    print("The upload failed with an unexpected response.")
+                                    print(
+                                        "The upload failed with an unexpected response."
+                                    )
                                 return False
                     except HttpError as e:
                         if e.resp.status in RETRIABLE_STATUS_CODES:
@@ -193,7 +211,7 @@ class UploadAPI:
             def initialize_upload(youtube_instance):
                 tags = None
                 if info.get("comment"):
-                    tags = info.get("comment").split(",") # type: ignore
+                    tags = info.get("comment").split(",")  # type: ignore
 
                 body = dict(
                     snippet=dict(
@@ -210,8 +228,7 @@ class UploadAPI:
                     part=",".join(body.keys()),
                     body=body,
                     media_body=MediaFileUpload(
-                        file_to_upload,
-                         chunksize=-1, resumable=True
+                        file_to_upload, chunksize=-1, resumable=True
                     ),
                 )
 
@@ -229,15 +246,22 @@ class UploadAPI:
                     )
                     available_thumbnails = list(
                         filter(
-                            lambda file: file.endswith(".jpeg") or file.endswith(".png"),
+                            lambda file: file.endswith(".jpeg")
+                            or file.endswith(".png"),
                             os.listdir(default_thumbnail_path),
                         )
                     )
-                    default_thumbnail_path = os.path.join(
-                        default_thumbnail_path,
-                        rd.choice(available_thumbnails),
-                    ) if available_thumbnails else None
-                    thumbnail_path = Path(default_thumbnail_path) if default_thumbnail_path else None
+                    default_thumbnail_path = (
+                        os.path.join(
+                            default_thumbnail_path,
+                            rd.choice(available_thumbnails),
+                        )
+                        if available_thumbnails
+                        else None
+                    )
+                    thumbnail_path = (
+                        Path(default_thumbnail_path) if default_thumbnail_path else None
+                    )
 
                 youtube_instance.thumbnails().set(
                     videoId=video_id,
@@ -263,33 +287,44 @@ class UploadAPI:
                     )
                     available_thumbnails = list(
                         filter(
-                            lambda file: file.endswith(".jpeg") or file.endswith(".png"),
+                            lambda file: file.endswith(".jpeg")
+                            or file.endswith(".png"),
                             os.listdir(default_thumbnail_path),
                         )
                     )
-                    default_thumbnail_path = os.path.join(
-                        default_thumbnail_path,
-                        rd.choice(available_thumbnails),
-                    ) if available_thumbnails else None
-                    thumbnail_path = Path(default_thumbnail_path) if default_thumbnail_path else None
+                    default_thumbnail_path = (
+                        os.path.join(
+                            default_thumbnail_path,
+                            rd.choice(available_thumbnails),
+                        )
+                        if available_thumbnails
+                        else None
+                    )
+                    thumbnail_path = (
+                        Path(default_thumbnail_path) if default_thumbnail_path else None
+                    )
 
                 options = selenium.webdriver.ChromeOptions()
                 options.add_argument("--log-level=3")
-                options.add_argument(f"user-data-dir={self.__settings_manager__.chrome_profile_dir}")
+                options.add_argument(
+                    f"user-data-dir={self.__settings_manager__.chrome_profile_dir}"
+                )
                 options.add_experimental_option("excludeSwitches", ["enable-logging"])
                 options.add_argument("--disable-search-engine-choice-screen")
                 driver = selenium.webdriver.Chrome(options=options)
                 driver.maximize_window()
                 errors = [NoSuchElementException, ElementNotInteractableException]
-                wait = WebDriverWait(driver, timeout=5, poll_frequency=.2, ignored_exceptions=errors)
+                wait = WebDriverWait(
+                    driver, timeout=5, poll_frequency=0.2, ignored_exceptions=errors
+                )
             except NoSuchDriverException as e:
                 print("Please install the Chrome WebDriver to upload to Instagram.")
                 raise e
-            
+
             def wait_for_element(selector: tuple[str, str]):
                 wait.until(EC.presence_of_element_located(selector))
                 return driver.find_element(*selector)
-            
+
             def click_element(selector: tuple[str, str]):
                 wait_for_element(selector).click()
 
@@ -298,34 +333,113 @@ class UploadAPI:
 
             def is_selected(selector: tuple[str, str]) -> bool:
                 return wait_for_element(selector).is_selected()
-            
+
             def wait_until(selector: tuple[str, str], callable) -> bool:
                 wait_for_element(selector)
-                return wait.until(lambda driver: callable(driver.find_element(*selector)))
-            
+                return wait.until(
+                    lambda driver: callable(driver.find_element(*selector))
+                )
+
             try:
                 driver.get("https://www.instagram.com")
-                click_element((By.XPATH, "/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div[2]/div/div/div/div/div[2]/div[7]/div/span/div/a/div/div[2]"))
-                click_element((By.XPATH, "/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div[2]/div/div/div/div/div[2]/div[7]/div/span/div/div/div/div[1]/a[1]/div[1]/div/div/div[1]/div/div/span/span"))
-                send_keys((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.xdl72j9.x1iyjqo2.xs83m0k.x15wfb8v.x3aagtl.xqbdwvv.x6ql1ns.x1cwzgcd > div.x6s0dn4.x78zum5.x5yr21d.xl56j7k.x1n2onr6.xh8yej3 > form > input"), file_to_upload)
-                click_element((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.xdl72j9.x1iyjqo2.xs83m0k.x15wfb8v.x3aagtl.xqbdwvv.x6ql1ns.x1cwzgcd > div.x6s0dn4.x78zum5.x5yr21d.xl56j7k.x1n2onr6.xh8yej3 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1xmf6yo.x1emribx.x1e56ztr.x1i64zmx.x10l6tqk.x1ey2m1c.x17qophe.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1 > div > div:nth-child(2) > div > button"))
-                click_element((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.xdl72j9.x1iyjqo2.xs83m0k.x15wfb8v.x3aagtl.xqbdwvv.x6ql1ns.x1cwzgcd > div.x6s0dn4.x78zum5.x5yr21d.xl56j7k.x1n2onr6.xh8yej3 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1xmf6yo.x1emribx.x1e56ztr.x1i64zmx.x10l6tqk.x1ey2m1c.x17qophe.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1 > div > div:nth-child(2) > div > button"))
-                click_element((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.xdl72j9.x1iyjqo2.xs83m0k.x15wfb8v.x3aagtl.xqbdwvv.x6ql1ns.x1cwzgcd > div.x6s0dn4.x78zum5.x5yr21d.xl56j7k.x1n2onr6.xh8yej3 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1xmf6yo.x1emribx.x1e56ztr.x1i64zmx.x10l6tqk.x1ey2m1c.x17qophe.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1 > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1y1aw1k.x1sxyh0.xwib8y2.xurb0ha.x1n2onr6.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1 > div > div:nth-child(1) > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1n2onr6.x1plvlek.xryxfnj.x1iyjqo2.x2lwn1j.xeuugli.xdt5ytf.xqjyukv.x1cy8zhl.x1oa3qoh.x1nhvcw1 > span"))
-                click_element((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div._ac7b._ac7d > div > div"))
-                send_keys((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.x15wfb8v.x3aagtl.x6ql1ns.x78zum5.xdl72j9.x1iyjqo2.xs83m0k.x13vbajr.x1ue5u6n > div.xhk4uv.x26u7qi.xy80clv.x9f619.x78zum5.x1n2onr6.x1f4304s > div > div > div > div > div:nth-child(1) > div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xln7xf2.xk390pu.x1hmvnq2.x11i5rnm.x1u7kmwd.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.x11njtxf > div > div > form > input"), str(thumbnail_path)) if thumbnail_path else None
-                click_element((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div._ac7b._ac7d > div > div"))
+                click_element(
+                    (
+                        By.XPATH,
+                        "/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div[2]/div/div/div/div/div[2]/div[7]/div/span/div/a/div/div[2]",
+                    )
+                )
+                click_element(
+                    (
+                        By.XPATH,
+                        "/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div[2]/div/div/div/div/div[2]/div[7]/div/span/div/div/div/div[1]/a[1]/div[1]/div/div/div[1]/div/div/span/span",
+                    )
+                )
+                send_keys(
+                    (
+                        By.CSS_SELECTOR,
+                        "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.xdl72j9.x1iyjqo2.xs83m0k.x15wfb8v.x3aagtl.xqbdwvv.x6ql1ns.x1cwzgcd > div.x6s0dn4.x78zum5.x5yr21d.xl56j7k.x1n2onr6.xh8yej3 > form > input",
+                    ),
+                    file_to_upload,
+                )
+                click_element(
+                    (
+                        By.CSS_SELECTOR,
+                        "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.xdl72j9.x1iyjqo2.xs83m0k.x15wfb8v.x3aagtl.xqbdwvv.x6ql1ns.x1cwzgcd > div.x6s0dn4.x78zum5.x5yr21d.xl56j7k.x1n2onr6.xh8yej3 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1xmf6yo.x1emribx.x1e56ztr.x1i64zmx.x10l6tqk.x1ey2m1c.x17qophe.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1 > div > div:nth-child(2) > div > button",
+                    )
+                )
+                click_element(
+                    (
+                        By.CSS_SELECTOR,
+                        "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.xdl72j9.x1iyjqo2.xs83m0k.x15wfb8v.x3aagtl.xqbdwvv.x6ql1ns.x1cwzgcd > div.x6s0dn4.x78zum5.x5yr21d.xl56j7k.x1n2onr6.xh8yej3 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1xmf6yo.x1emribx.x1e56ztr.x1i64zmx.x10l6tqk.x1ey2m1c.x17qophe.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1 > div > div:nth-child(2) > div > button",
+                    )
+                )
+                click_element(
+                    (
+                        By.CSS_SELECTOR,
+                        "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.xdl72j9.x1iyjqo2.xs83m0k.x15wfb8v.x3aagtl.xqbdwvv.x6ql1ns.x1cwzgcd > div.x6s0dn4.x78zum5.x5yr21d.xl56j7k.x1n2onr6.xh8yej3 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1xmf6yo.x1emribx.x1e56ztr.x1i64zmx.x10l6tqk.x1ey2m1c.x17qophe.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1 > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1y1aw1k.x1sxyh0.xwib8y2.xurb0ha.x1n2onr6.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1 > div > div:nth-child(1) > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1n2onr6.x1plvlek.xryxfnj.x1iyjqo2.x2lwn1j.xeuugli.xdt5ytf.xqjyukv.x1cy8zhl.x1oa3qoh.x1nhvcw1 > span",
+                    )
+                )
+                click_element(
+                    (
+                        By.CSS_SELECTOR,
+                        "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div._ac7b._ac7d > div > div",
+                    )
+                )
+                (
+                    send_keys(
+                        (
+                            By.CSS_SELECTOR,
+                            "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div.x15wfb8v.x3aagtl.x6ql1ns.x78zum5.xdl72j9.x1iyjqo2.xs83m0k.x13vbajr.x1ue5u6n > div.xhk4uv.x26u7qi.xy80clv.x9f619.x78zum5.x1n2onr6.x1f4304s > div > div > div > div > div:nth-child(1) > div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xln7xf2.xk390pu.x1hmvnq2.x11i5rnm.x1u7kmwd.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.x11njtxf > div > div > form > input",
+                        ),
+                        str(thumbnail_path),
+                    )
+                    if thumbnail_path
+                    else None
+                )
+                click_element(
+                    (
+                        By.CSS_SELECTOR,
+                        "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div._ac7b._ac7d > div > div",
+                    )
+                )
 
                 instagram_description = f"{info.get('title')}\n\n{info.get('description')}\n\n{info.get('album')}"
-                description_elem = driver.find_element(By.CSS_SELECTOR, "div[contenteditable='true']")
+                description_elem = driver.find_element(
+                    By.CSS_SELECTOR, "div[contenteditable='true']"
+                )
                 description_elem.click()
                 pc.copy(instagram_description)
                 description_elem.send_keys(Keys.CONTROL, "v")
 
-                click_element((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div._ac7b._ac7d > div > div"))
+                click_element(
+                    (
+                        By.CSS_SELECTOR,
+                        "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div._ac7b._ac7d > div > div",
+                    )
+                )
                 try:
-                    wait = WebDriverWait(driver, timeout=30, poll_frequency=.2, ignored_exceptions=errors)
-                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x10l6tqk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.xl56j7k > div > div")))
-                    wait.until_not(EC.presence_of_element_located((By.CSS_SELECTOR, "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x10l6tqk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.xl56j7k > div > div")))
+                    wait = WebDriverWait(
+                        driver,
+                        timeout=30,
+                        poll_frequency=0.2,
+                        ignored_exceptions=errors,
+                    )
+                    wait.until(
+                        EC.presence_of_element_located(
+                            (
+                                By.CSS_SELECTOR,
+                                "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x10l6tqk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.xl56j7k > div > div",
+                            )
+                        )
+                    )
+                    wait.until_not(
+                        EC.presence_of_element_located(
+                            (
+                                By.CSS_SELECTOR,
+                                "body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div > div > div > div._ap97 > div > div > div > div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x10l6tqk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.xl56j7k > div > div",
+                            )
+                        )
+                    )
                 except Exception as e:
                     if self.__verbose__:
                         print("Uploaded to Instagram.")
@@ -343,33 +457,44 @@ class UploadAPI:
                     )
                     available_thumbnails = list(
                         filter(
-                            lambda file: file.endswith(".jpeg") or file.endswith(".png"),
+                            lambda file: file.endswith(".jpeg")
+                            or file.endswith(".png"),
                             os.listdir(default_thumbnail_path),
                         )
                     )
-                    default_thumbnail_path = os.path.join(
-                        default_thumbnail_path,
-                        rd.choice(available_thumbnails),
-                    ) if available_thumbnails else None
-                    thumbnail_path = Path(default_thumbnail_path) if default_thumbnail_path else None
+                    default_thumbnail_path = (
+                        os.path.join(
+                            default_thumbnail_path,
+                            rd.choice(available_thumbnails),
+                        )
+                        if available_thumbnails
+                        else None
+                    )
+                    thumbnail_path = (
+                        Path(default_thumbnail_path) if default_thumbnail_path else None
+                    )
 
                 options = selenium.webdriver.ChromeOptions()
                 options.add_argument("--log-level=3")
-                options.add_argument(f"user-data-dir={self.__settings_manager__.chrome_profile_dir}")
+                options.add_argument(
+                    f"user-data-dir={self.__settings_manager__.chrome_profile_dir}"
+                )
                 options.add_experimental_option("excludeSwitches", ["enable-logging"])
                 options.add_argument("--disable-search-engine-choice-screen")
                 driver = selenium.webdriver.Chrome(options=options)
                 driver.maximize_window()
                 errors = [NoSuchElementException, ElementNotInteractableException]
-                wait = WebDriverWait(driver, timeout=5, poll_frequency=.2, ignored_exceptions=errors)
+                wait = WebDriverWait(
+                    driver, timeout=5, poll_frequency=0.2, ignored_exceptions=errors
+                )
             except NoSuchDriverException as e:
                 print("Please install the Chrome WebDriver to upload to TikTok.")
                 raise e
-            
+
             def wait_for_element(selector: tuple[str, str]):
                 wait.until(EC.presence_of_element_located(selector))
                 return driver.find_element(*selector)
-            
+
             def click_element(selector: tuple[str, str]):
                 wait_for_element(selector).click()
 
@@ -378,28 +503,51 @@ class UploadAPI:
 
             def is_selected(selector: tuple[str, str]) -> bool:
                 return wait_for_element(selector).is_selected()
-            
+
             def wait_until(selector: tuple[str, str], callable) -> bool:
                 wait_for_element(selector)
-                return wait.until(lambda driver: callable(driver.find_element(*selector)))
-            
+                return wait.until(
+                    lambda driver: callable(driver.find_element(*selector))
+                )
+
             try:
                 driver.get("https://www.tiktok.com/tiktokstudio/upload")
-                send_keys((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-3600237669.upload-container.flow-opt-ui > div > div > div > input"), file_to_upload)
-                
+                send_keys((By.XPATH, "//input[@type='file']"), file_to_upload)
+
                 hashtags = self.generate_hashtags(info.get("comment").split(","))  # type: ignore
                 tiktok_description = f"{info.get('title')}\n\n{info.get('description')}\n\n{info.get('album')}\n\n{' '.join(hashtags)}"
-                description_elem = wait_for_element((By.CSS_SELECTOR, 'span[data-text="true"]'))
+                description_elem = wait_for_element(
+                    (By.CSS_SELECTOR, 'span[data-text="true"]')
+                )
                 pc.copy(tiktok_description)
                 description_elem.click()
                 description_elem.send_keys(Keys.CONTROL, "a")
                 description_elem.send_keys(Keys.CONTROL, "v")
-                click_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-510587813 > div > div"))
-                click_element((By.CSS_SELECTOR, r"#\:r10\: > div > div.jsx-3186560874.cover-edit-header > div:nth-child(2)"))
-                send_keys((By.CSS_SELECTOR, r"#\:r10\: > div > div:nth-child(3) > div > input"), str(thumbnail_path)) if thumbnail_path else None
+                click_element(
+                    (
+                        By.XPATH,
+                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[2]/div/div',
+                    )
+                )
+                click_element((By.XPATH, '//*[@id=":r10:"]/div/div[1]/div[2]'))
+                (
+                    send_keys(
+                        (By.XPATH, "//input[@type='file']"),
+                        str(thumbnail_path),
+                    )
+                    if thumbnail_path
+                    else None
+                )
                 time.sleep(1)
-                click_element((By.CSS_SELECTOR, r"#\:r10\: > div > div:nth-child(3) > div.jsx-2328539565.cover-edit-footer > button.TUXButton.TUXButton--default.TUXButton--medium.TUXButton--primary"))
-                click_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-3026483946.more-collapse.collapsed > div.jsx-3026483946.more-btn > span"))
+                click_element(
+                    (By.XPATH, '//*[@id=":r10:"]/div/div[3]/div[3]/button[2]')
+                )
+                click_element(
+                    (
+                        By.XPATH,
+                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[6]/div[1]',
+                    )
+                )
                 if is_selected((By.CSS_SELECTOR, r"#\:r1d\:")):
                     click_element((By.CSS_SELECTOR, r"#\:r1d\:"))
                 if is_selected((By.CSS_SELECTOR, r"#\:r1e\:")):
@@ -407,8 +555,19 @@ class UploadAPI:
                 if not is_selected((By.CSS_SELECTOR, r"#\:r1l\:")):
                     click_element((By.CSS_SELECTOR, r"#\:r1l\:"))
 
-                wait_until((By.XPATH, "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div/div[1]/div[3]/div"), lambda span: span.text == "100%")
-                click_element((By.CSS_SELECTOR, "#root > div > div.css-11nu78w.eosfqul1 > div.css-17xtaid.eyoaol20 > div > div > div > div > div > div.jsx-275507257.container-v2.form-panel.flow-opt-v1 > div > div.jsx-3026483946.form-v2.flow-opt-v1.reverse > div.jsx-3026483946.button-group > button.TUXButton.TUXButton--default.TUXButton--large.TUXButton--primary"))
+                wait_until(
+                    (
+                        By.XPATH,
+                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[1]/div[3]/div',
+                    ),
+                    lambda span: span.text == "100%",
+                )
+                click_element(
+                    (
+                        By.XPATH,
+                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[8]/button[1]',
+                    )
+                )
                 time.sleep(5)
                 if self.__verbose__:
                     print("Uploaded to TikTok.")
