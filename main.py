@@ -189,7 +189,10 @@ def generate(
         save_response="voiceover.txt",
     ).content  # type: ignore
     video_text_paragraphs = tuple(
-        map(str.strip, [pg for pg in video_text_paragraphs.split("\n") if pg])
+        map(
+            str.strip,
+            [pg.replace("*", "") for pg in video_text_paragraphs.split("\n") if pg],
+        )
     )
 
     for index, paragraph in enumerate(video_text_paragraphs):
@@ -412,6 +415,7 @@ def regenerate(
                         f.write(segment["text"] + "\n")  # type: ignore
                         voiceover += segment["text"] + "\n"  # type: ignore
 
+        voiceover = voiceover.strip().replace("*", "")
         g4f_api = G4FAPI(verbose=is_verbose)
         prompt_manager = PromptManager()
         g4f_api.add_message(
