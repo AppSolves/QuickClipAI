@@ -444,6 +444,8 @@ class UploadAPI:
                     if self.__verbose__:
                         print("Uploaded to Instagram.")
                     driver.quit()
+                    del wait
+                    del driver
             except Exception as e:
                 print(e)
                 error = True
@@ -545,15 +547,15 @@ class UploadAPI:
                 click_element(
                     (
                         By.XPATH,
-                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[6]/div[1]',
+                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[7]/div[1]',
                     )
                 )
-                if is_selected((By.XPATH, '//*[@id=":r1f:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1f:"]'))
-                if is_selected((By.XPATH, '//*[@id=":r1g:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1g:"]'))
-                if not is_selected((By.XPATH, '//*[@id=":r1n:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1n:"]'))
+                if is_selected((By.XPATH, '//*[@id=":r1h:"]')):
+                    click_element((By.XPATH, '//*[@id=":r1h:"]'))
+                if is_selected((By.XPATH, '//*[@id=":r1i:"]')):
+                    click_element((By.XPATH, '//*[@id=":r1i:"]'))
+                if not is_selected((By.XPATH, '//*[@id=":r1p:"]')):
+                    click_element((By.XPATH, '//*[@id=":r1p:"]'))
 
                 wait_until(
                     (
@@ -565,7 +567,7 @@ class UploadAPI:
                 click_element(
                     (
                         By.XPATH,
-                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[8]/button[1]',
+                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[9]/button[1]',
                     )
                 )
                 time.sleep(5)
