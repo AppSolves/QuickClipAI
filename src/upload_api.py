@@ -151,6 +151,30 @@ class UploadAPI:
         )
         error: bool = False
 
+        if not thumbnail_path or not os.path.isfile(thumbnail_path):
+            default_thumbnail_path = os.path.join(
+                self.__settings_manager__.build_dir_for_session(session_id),
+                "pictures",
+            )
+            available_thumbnails = list(
+                filter(
+                    lambda file: file.startswith("thumbnail")
+                    and (file.endswith(".jpeg") or file.endswith(".png")),
+                    os.listdir(default_thumbnail_path),
+                )
+            )
+            default_thumbnail_path = (
+                os.path.join(
+                    default_thumbnail_path,
+                    rd.choice(available_thumbnails),
+                )
+                if available_thumbnails
+                else None
+            )
+            thumbnail_path = (
+                Path(default_thumbnail_path) if default_thumbnail_path else None
+            )
+
         if youtube:
             video_id = None
 
@@ -238,35 +262,16 @@ class UploadAPI:
                 if not video_id:
                     return
 
-                nonlocal thumbnail_path
-                if not thumbnail_path:
-                    default_thumbnail_path = os.path.join(
-                        self.__settings_manager__.build_dir_for_session(session_id),
-                        "pictures",
-                    )
-                    available_thumbnails = list(
-                        filter(
-                            lambda file: file.endswith(".jpeg")
-                            or file.endswith(".png"),
-                            os.listdir(default_thumbnail_path),
-                        )
-                    )
-                    default_thumbnail_path = (
-                        os.path.join(
-                            default_thumbnail_path,
-                            rd.choice(available_thumbnails),
-                        )
-                        if available_thumbnails
-                        else None
-                    )
-                    thumbnail_path = (
-                        Path(default_thumbnail_path) if default_thumbnail_path else None
-                    )
+                if self.__verbose__:
+                    print("Uploading thumbnail to YouTube...")
 
                 youtube_instance.thumbnails().set(
                     videoId=video_id,
                     media_body=MediaFileUpload(str(thumbnail_path)),
                 ).execute()
+
+                if self.__verbose__:
+                    print("Thumbnail uploaded to YouTube.")
 
             try:
                 youtube_instance = self.authenticated_service
@@ -280,30 +285,6 @@ class UploadAPI:
 
         if instagram:
             try:
-                if not thumbnail_path:
-                    default_thumbnail_path = os.path.join(
-                        self.__settings_manager__.build_dir_for_session(session_id),
-                        "pictures",
-                    )
-                    available_thumbnails = list(
-                        filter(
-                            lambda file: file.endswith(".jpeg")
-                            or file.endswith(".png"),
-                            os.listdir(default_thumbnail_path),
-                        )
-                    )
-                    default_thumbnail_path = (
-                        os.path.join(
-                            default_thumbnail_path,
-                            rd.choice(available_thumbnails),
-                        )
-                        if available_thumbnails
-                        else None
-                    )
-                    thumbnail_path = (
-                        Path(default_thumbnail_path) if default_thumbnail_path else None
-                    )
-
                 options = selenium.webdriver.ChromeOptions()
                 options.add_argument("--log-level=3")
                 options.add_argument(
@@ -452,30 +433,6 @@ class UploadAPI:
 
         if tiktok:
             try:
-                if not thumbnail_path:
-                    default_thumbnail_path = os.path.join(
-                        self.__settings_manager__.build_dir_for_session(session_id),
-                        "pictures",
-                    )
-                    available_thumbnails = list(
-                        filter(
-                            lambda file: file.endswith(".jpeg")
-                            or file.endswith(".png"),
-                            os.listdir(default_thumbnail_path),
-                        )
-                    )
-                    default_thumbnail_path = (
-                        os.path.join(
-                            default_thumbnail_path,
-                            rd.choice(available_thumbnails),
-                        )
-                        if available_thumbnails
-                        else None
-                    )
-                    thumbnail_path = (
-                        Path(default_thumbnail_path) if default_thumbnail_path else None
-                    )
-
                 options = selenium.webdriver.ChromeOptions()
                 options.add_argument("--log-level=3")
                 options.add_argument(
