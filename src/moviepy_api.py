@@ -139,19 +139,27 @@ class BensoundBackgroundMusic(BackgroundMusic):
             wait.until(EC.presence_of_element_located(selector))
             return driver.find_element(*selector)
 
-        def click_element(selector: tuple[str, str]):
-            wait_for_element(selector).click()
+        def click_element(selector: tuple[str, str], raise_error: bool = True) -> None:
+            try:
+                wait_for_element(selector).click()
+            except Exception as e:
+                if raise_error:
+                    raise e
 
         def wait_until(selector: tuple[str, str], callable) -> bool:
             wait_for_element(selector)
             return wait.until(lambda driver: callable(driver.find_element(*selector)))
 
         driver.get(url)
-        click_element((By.XPATH, "/html/body/div[7]/main/div[3]/div[4]/div[1]/button"))
-        click_element((By.XPATH, "/html/body/div[8]/div[2]/div/div[3]/div[3]/button"))
+        click_element(
+            (By.XPATH, '//*[@id="cookies-preferences-fixed"]/div[2]/footer/button[2]'),
+            False,
+        )
+        click_element((By.XPATH, '//*[@id="results"]/div[3]/div[4]/div[1]/button'))
+        click_element((By.XPATH, '//*[@id="license-attribution"]/div/div[3]/button'))
         credit_finder = (
-            By.CSS_SELECTOR,
-            "#thanks-for-downloading > div:nth-child(2) > div.tip-text-downloading > div > div.attribution.is-flex.is-flex-direction-column.mt-5.is-clickable > div.orfium-code-wrapper.is-flex.is-justify-content-space-between.is-align-items-center > div.is-flex.is-flex-direction-column",
+            By.XPATH,
+            '//*[@id="thanks-for-downloading"]/div[2]/div[2]/div/div[6]/div[2]/div[1]',
         )
         wait_until(credit_finder, lambda element: element.text)
         credit = wait_for_element(credit_finder).text
