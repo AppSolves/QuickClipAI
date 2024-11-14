@@ -488,7 +488,7 @@ class UploadAPI:
                         '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[2]/div/div',
                     )
                 )
-                click_element((By.XPATH, '//*[@id=":r13:"]/div/div[1]/div[2]'))
+                click_element((By.XPATH, '//*[@id=":r16:"]/div/div[1]/div[2]'))
                 (
                     send_keys(
                         (By.XPATH, "//input[@type='file']"),
@@ -499,7 +499,7 @@ class UploadAPI:
                 )
                 time.sleep(1)
                 click_element(
-                    (By.XPATH, '//*[@id=":r13:"]/div/div[3]/div[3]/button[2]')
+                    (By.XPATH, '//*[@id=":r16:"]/div/div[3]/div[3]/button[2]')
                 )
                 click_element(
                     (
@@ -507,12 +507,12 @@ class UploadAPI:
                         '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[7]/div[1]',
                     )
                 )
-                if is_selected((By.XPATH, '//*[@id=":r1i:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1i:"]'))
-                if is_selected((By.XPATH, '//*[@id=":r1j:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1j:"]'))
-                if not is_selected((By.XPATH, '//*[@id=":r1q:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1q:"]'))
+                if is_selected((By.XPATH, '//*[@id=":r1l:"]')):
+                    click_element((By.XPATH, '//*[@id=":r1l:"]'))
+                if is_selected((By.XPATH, '//*[@id=":r1m:"]')):
+                    click_element((By.XPATH, '//*[@id=":r1m:"]'))
+                if not is_selected((By.XPATH, '//*[@id=":r1t:"]')):
+                    click_element((By.XPATH, '//*[@id=":r1t:"]'))
 
                 wait_until(
                     (
