@@ -15,4 +15,5 @@ However, you should NOT choose boring or obvious topics like "Why can't humans b
 Choose topics from a variety of fields like science, history, technology, nature, etc. to keep the content creator's channel diverse and interesting for the viewers. (Example: If there are already many videos about the human brain, choose different topics like space, animals, etc. Later you can come back to previous subjects if you want.)
 Don't forget to NOT stylize the text in any way. Just plain text. No need to add any extra information, instructions or things like asterisks. Just the pure voice-over text for the video.
 ALWAYS Avoid duplicating topics covered in previous videos. Choose topics that people wonder about or get shocked by and things they don't already know (e.g. If there are many videos about "Why we yawn" already, don't choose that topic).
+NOTE: Sometimes, you choose the same topic over and over again. This is NOT allowed. You MUST choose a new topic every time.
 Here are the titles of previous video topics you must avoid: {topics}.
