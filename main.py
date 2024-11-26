@@ -360,11 +360,54 @@ def regenerate(
     fooocus_api = FooocusAPI(verbose=is_verbose)
     moviepy_api = MoviepyAPI(verbose=is_verbose)
 
-    if not os.listdir(elevenlabs_api.output_dir) or not os.listdir(
-        fooocus_api.output_dir
+    if not os.path.isfile(
+        os.path.join(settings_manager.build_dir, "responses", "pictureprompts.txt")
     ):
-        typer.echo("No build assets found.")
-        raise typer.Exit(code=1)
+        g4f_api = G4FAPI(verbose=is_verbose)
+        prompt_manager = PromptManager()
+        g4f_api.add_message(
+            Message(
+                MessageSender.USER,
+                prompt_manager.get_prompt("picture_generation"),
+            ),
+        )
+        g4f_api.add_message(
+            Message(
+                MessageSender.USER,
+                prompt_manager.get_prompt("video_info"),
+            ),
+        )
+        picture_prompts = g4f_api.get_response(
+            Message(
+                MessageSender.USER, prompt_manager.get_prompt("picture_generation")
+            ),
+            save_response="pictureprompts.txt",
+        ).content  # type: ignore
+        # Generate pictures
+        picture_prompts = tuple(
+            map(str.strip, [prompt for prompt in picture_prompts.split("\n") if prompt])
+        )
+        for index, prompt in enumerate(picture_prompts):
+            is_last = index == len(picture_prompts) - 1
+            fooocus_api.generate_picture(
+                prompt,
+                image_type=ImageType.JPEG,
+                resolution=Resolution.RES_768x1344,
+                model=Model("juggernautXL_v8Rundiffusion"),
+                lora_1=LoRa("sd_xl_offset_example-lora_1.0", weight=0.1),
+                upscale_mode=UpscaleMode.X_1_5,
+                save_picture="thumbnail" if is_last else str(index),
+            )
+        picture_prompts = "\n".join(picture_prompts)
+    else:
+        with open(
+            os.path.join(settings_manager.build_dir, "responses", "pictureprompts.txt"),
+            "r",
+            encoding="utf-8",
+        ) as f:
+            picture_prompts = "\n".join(
+                [line for line in f.readlines() if line.strip()]
+            )
 
     if not os.path.isfile(
         os.path.join(settings_manager.build_dir, "responses", "video_info.txt")
