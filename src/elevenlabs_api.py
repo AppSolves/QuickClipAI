@@ -1,6 +1,8 @@
 import os
 import warnings
 
+import typer
+
 from src.errors import APIKeyNotFoundError
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -55,7 +57,7 @@ class ElevenLabsAPI:
         save_audio: str | None = None,
     ):
         if self.__verbose__:
-            print(f"Generating audio...")
+            typer.echo(f"Generating audio...")
         try:
             response = self.__client__.generate(
                 text=text,
@@ -64,7 +66,7 @@ class ElevenLabsAPI:
                 model=model,
             )
         except Exception as e:
-            print(f"Error: {e}")
+            typer.echo(f"Error: {e}")
             return
 
         if save_audio:
@@ -73,7 +75,7 @@ class ElevenLabsAPI:
 
             save(response, os.path.join(self.output_dir, save_audio))
             if self.__verbose__:
-                print(f"Audio saved as: {save_audio}")
+                typer.echo(f"Audio saved as: {save_audio}")
             return os.path.join(self.output_dir, save_audio)
 
         return response

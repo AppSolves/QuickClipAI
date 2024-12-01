@@ -185,6 +185,8 @@ def generate(
     )
 
     for index, paragraph in enumerate(video_text_paragraphs):
+        if is_verbose:
+            typer.echo(f"{index + 1}. {paragraph}")
         elevenlabs_api.generate_audio(
             paragraph,
             voice_id=voice_id,
@@ -201,6 +203,8 @@ def generate(
 
     for index, prompt in enumerate(fooocus_prompts):
         is_last = index == len(fooocus_prompts) - 1
+        if is_verbose:
+            typer.echo(f"{index + 1}. {prompt}")
         fooocus_api.generate_picture(
             prompt,
             image_type=ImageType.JPEG,
@@ -358,59 +362,21 @@ def regenerate(
     typer.echo(f"Session UID: {settings_manager.session_id}")
     elevenlabs_api = ElevenLabsAPI(verbose=is_verbose)
     fooocus_api = FooocusAPI(verbose=is_verbose)
-    moviepy_api = MoviepyAPI(verbose=is_verbose)
+    moviepy_api = MoviepyAPI(verbose=is_verbose)  #
 
-    if not os.path.isfile(
-        os.path.join(settings_manager.build_dir, "responses", "pictureprompts.txt")
-    ):
-        g4f_api = G4FAPI(verbose=is_verbose)
-        prompt_manager = PromptManager()
-        g4f_api.add_message(
-            Message(
-                MessageSender.USER,
-                prompt_manager.get_prompt("picture_generation"),
-            ),
-        )
-        g4f_api.add_message(
-            Message(
-                MessageSender.USER,
-                prompt_manager.get_prompt("video_info"),
-            ),
-        )
-        picture_prompts = g4f_api.get_response(
-            Message(
-                MessageSender.USER, prompt_manager.get_prompt("picture_generation")
-            ),
-            save_response="pictureprompts.txt",
-        ).content  # type: ignore
-        # Generate pictures
-        picture_prompts = tuple(
-            map(str.strip, [prompt for prompt in picture_prompts.split("\n") if prompt])
-        )
-        for index, prompt in enumerate(picture_prompts):
-            is_last = index == len(picture_prompts) - 1
-            fooocus_api.generate_picture(
-                prompt,
-                image_type=ImageType.JPEG,
-                resolution=Resolution.RES_768x1344,
-                model=Model("juggernautXL_v8Rundiffusion"),
-                lora_1=LoRa("sd_xl_offset_example-lora_1.0", weight=0.1),
-                upscale_mode=UpscaleMode.X_1_5,
-                save_picture="thumbnail" if is_last else str(index),
-            )
-        picture_prompts = "\n".join(picture_prompts)
-    else:
-        with open(
-            os.path.join(settings_manager.build_dir, "responses", "pictureprompts.txt"),
-            "r",
-            encoding="utf-8",
-        ) as f:
-            picture_prompts = "\n".join(
-                [line for line in f.readlines() if line.strip()]
-            )
+    video_path = settings_manager.get_video_path(
+        settings_manager.session_id, quiet=True
+    )
+    if video_path:
+        os.remove(video_path)
 
     if not os.path.isfile(
         os.path.join(settings_manager.build_dir, "responses", "video_info.txt")
+    ) or not (
+        os.path.isfile(
+            os.path.join(settings_manager.build_dir, "responses", "pictureprompts.txt")
+        )
+        and os.listdir(fooocus_api.output_dir)
     ):
         try:
             with open(
@@ -419,17 +385,6 @@ def regenerate(
                 encoding="utf-8",
             ) as f:
                 voiceover = "\n".join([line for line in f.readlines() if line.strip()])
-
-            with open(
-                os.path.join(
-                    settings_manager.build_dir, "responses", "pictureprompts.txt"
-                ),
-                "r",
-                encoding="utf-8",
-            ) as f:
-                picture_prompts = "\n".join(
-                    [line for line in f.readlines() if line.strip()]
-                )
         except FileNotFoundError:
             if not os.listdir(elevenlabs_api.output_dir):
                 typer.echo("No voiceover found.")
@@ -456,16 +411,42 @@ def regenerate(
             Message(MessageSender.USER, prompt_manager.get_prompt("video_idea")),
         )
         g4f_api.add_message(Message(MessageSender.ASSISTANT, voiceover))
-        g4f_api.add_message(
-            Message(
-                MessageSender.USER, prompt_manager.get_prompt("picture_generation")
-            ),
-        )
-        g4f_api.add_message(Message(MessageSender.ASSISTANT, picture_prompts))
+        if is_verbose:
+            typer.echo(voiceover)
+        if not os.path.isfile(
+            os.path.join(settings_manager.build_dir, "responses", "pictureprompts.txt")
+        ) or not os.listdir(fooocus_api.output_dir):
+            fooocus_prompts = g4f_api.get_response(
+                Message(
+                    MessageSender.USER, prompt_manager.get_prompt("picture_generation")
+                ),
+                save_response="pictureprompts.txt",
+            ).content  # type: ignore
+            fooocus_prompts = tuple(
+                map(
+                    str.strip,
+                    [prompt for prompt in fooocus_prompts.split("\n") if prompt],
+                )
+            )
+
+            for index, prompt in enumerate(fooocus_prompts):
+                is_last = index == len(fooocus_prompts) - 1
+                if is_verbose:
+                    typer.echo(f"{index + 1}. {prompt}")
+                fooocus_api.generate_picture(
+                    prompt,
+                    image_type=ImageType.JPEG,
+                    resolution=Resolution.RES_768x1344,
+                    model=Model("juggernautXL_v8Rundiffusion"),
+                    lora_1=LoRa("sd_xl_offset_example-lora_1.0", weight=0.1),
+                    upscale_mode=UpscaleMode.X_1_5,
+                    save_picture="thumbnail" if is_last else str(index),
+                )
         video_info = g4f_api.get_response(
             Message(MessageSender.USER, prompt_manager.get_prompt("video_info")),
             save_response="video_info.txt",
         ).content  # type: ignore
+
         video_title, video_description, video_hashtags = tuple(
             map(
                 lambda info: (
@@ -684,7 +665,7 @@ def inspect(
         raise typer.Exit(code=1)
     typer.echo(f"Session UID: {session_id}")
     video_path = settings_manager.get_video_path(session_id)
-    metadata = settings_manager.get_metadata(video_path)
+    metadata = settings_manager.get_metadata(video_path or "")
     typer.echo(json.dumps(metadata, indent=4))
 
 

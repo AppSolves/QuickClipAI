@@ -8,6 +8,7 @@ from enum import Enum
 
 import g4f.debug
 import g4f.Provider as Provider
+import typer
 from g4f.client import Client
 from g4f.cookies import read_cookie_files, set_cookies_dir
 from g4f.errors import MissingAuthError, RateLimitError
@@ -46,6 +47,9 @@ class Message:
 
     def __dict__(self) -> dict[str, str]:
         return self.to_dict()
+
+    def __str__(self) -> str:
+        return self.__content__
 
 
 @Singleton
@@ -146,14 +150,20 @@ class G4FAPI:
             if as_dict
             else [Message.from_dict(message) for message in self.__messages__]
         )
-    
+
     def add_message(self, message: Message) -> None:
         self.__messages__.append(message.to_dict())
 
     def clear_messages(self) -> None:
         self.__messages__ = []
 
-    def get_response(self, message: Message, as_str: bool = False, retries: int = 0, save_response: str | None = None) -> Message | str:
+    def get_response(
+        self,
+        message: Message,
+        as_str: bool = False,
+        retries: int = 0,
+        save_response: str | None = None,
+    ) -> Message | str:
         if not message.sender == MessageSender.USER:
             raise ValueError("The first message must be from the user")
 
@@ -164,14 +174,14 @@ class G4FAPI:
         self.__messages__.append(message.to_dict())
         try:
             if self.__verbose__:
-                print(
+                typer.echo(
                     f"Sending message (Model: {model} | Provider: {"Auto" if not self.__provider__ else self.__provider__.__name__})..."
                 )
             response = (
                 self.__client__.chat.completions.create(
                     model=model,
                     messages=self.__messages__,  # type: ignore
-                    provider=self.__provider__, # type: ignore
+                    provider=self.__provider__,  # type: ignore
                 )
                 .choices[0]  # type: ignore
                 .message.content
@@ -182,7 +192,7 @@ class G4FAPI:
 
             self.__messages__.pop()
             if self.__verbose__:
-                print(f"Missing authentication for provider {self.__provider__.__name__}. Retrying with automatic provider...") # type: ignore
+                typer.echo(f"Missing authentication for provider {self.__provider__.__name__}. Retrying with automatic provider...")  # type: ignore
             self.__provider__ = None
             return self.get_response(message, as_str, retries + 1)
         except RateLimitError as e:
@@ -194,7 +204,7 @@ class G4FAPI:
                 self.__using_backup_model__ = False
                 raise e
             if self.__verbose__:
-                print(
+                typer.echo(
                     f"Rate limit for model {model} reached. Retrying with backup model {self.__backup_model__}..."
                 )
             self.__using_backup_model__ = True
@@ -206,11 +216,11 @@ class G4FAPI:
             self.__messages__.pop()
             if self.__verbose__:
                 if self.__provider__:
-                    print(
-                        f"Cloudflare detected when using provider {self.__provider__.__name__}. Retrying with automatic provider..." # type: ignore
+                    typer.echo(
+                        f"Cloudflare detected when using provider {self.__provider__.__name__}. Retrying with automatic provider..."  # type: ignore
                     )
                 else:
-                    print(
+                    typer.echo(
                         "Cloudflare detected. Retrying with automatic provider..."
                     )
             self.__provider__ = None
@@ -223,13 +233,18 @@ class G4FAPI:
         if save_response and isinstance(response, str):
             if not save_response.endswith(".txt"):
                 save_response += ".txt"
-            os.makedirs(os.path.join(
-                self.__settings_manager__.build_dir, "responses"
-            ), exist_ok=True)
-            with open(os.path.join(
-                self.__settings_manager__.build_dir, "responses", save_response
-            ), "w", encoding="utf-8") as f:
+            os.makedirs(
+                os.path.join(self.__settings_manager__.build_dir, "responses"),
+                exist_ok=True,
+            )
+            with open(
+                os.path.join(
+                    self.__settings_manager__.build_dir, "responses", save_response
+                ),
+                "w",
+                encoding="utf-8",
+            ) as f:
                 f.write(response)
         if self.__verbose__:
-            print("Received response from provider.")
+            typer.echo("Received response from provider.")
         return response if as_str else Message(MessageSender.ASSISTANT, response)  # type: ignore

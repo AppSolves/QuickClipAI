@@ -9,6 +9,7 @@ import google.auth.transport.requests
 import httplib2
 import pyperclip as pc
 import selenium.webdriver
+import typer
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -58,8 +59,8 @@ class UploadAPI:
                 try:
                     credentials.refresh(google.auth.transport.requests.Request())
                 except Exception as e:
-                    print(f"Error refreshing credentials: {e}")
-                    print("Reauthenticating...\n")
+                    typer.echo(f"Error refreshing credentials: {e}")
+                    typer.echo("Reauthenticating...\n")
                     youtube_credentials = settings_manager.get("publisher", {}).get("youtube", None)  # type: ignore
                     if not youtube_credentials:
                         raise Exception("No YouTube credentials found.")
@@ -119,7 +120,7 @@ class UploadAPI:
         thumbnail_path: Path | None = None,
     ) -> bool:
         if self.__verbose__:
-            print(
+            typer.echo(
                 f"Uploading video to {'YouTube, ' if youtube else ''}{'Instagram, ' if instagram else ''}{'TikTok' if tiktok else ''}.".strip(
                     ", ."
                 )
@@ -147,7 +148,7 @@ class UploadAPI:
             )[0],
         )
         info = self.__settings_manager__.get_metadata(
-            self.__settings_manager__.get_video_path(session_id)
+            self.__settings_manager__.get_video_path(session_id) or ""
         )
         error: bool = False
 
@@ -186,12 +187,12 @@ class UploadAPI:
                 while response is None:
                     try:
                         if self.__verbose__:
-                            print("Uploading file to YouTube...")
+                            typer.echo("Uploading file to YouTube...")
                         _, response = insert_request.next_chunk()
                         if response is not None:
                             if "id" in response:
                                 if self.__verbose__:
-                                    print(
+                                    typer.echo(
                                         "Video id '%s' was successfully uploaded."
                                         % response["id"]
                                     )
@@ -199,7 +200,7 @@ class UploadAPI:
                                 return True
                             else:
                                 if self.__verbose__:
-                                    print(
+                                    typer.echo(
                                         "The upload failed with an unexpected response."
                                     )
                                 return False
@@ -216,17 +217,17 @@ class UploadAPI:
 
                     if error is not None:
                         if self.__verbose__:
-                            print(error)
+                            typer.echo(error)
                         retry += 1
                         if retry > MAX_RETRIES:
                             if self.__verbose__:
-                                print("No longer attempting to retry.")
+                                typer.echo("No longer attempting to retry.")
                             return False
 
                         max_sleep = 2**retry
                         sleep_seconds = random.random() * max_sleep
                         if self.__verbose__:
-                            print(
+                            typer.echo(
                                 "Sleeping %f seconds and then retrying..."
                                 % sleep_seconds
                             )
@@ -263,7 +264,7 @@ class UploadAPI:
                     return
 
                 if self.__verbose__:
-                    print("Uploading thumbnail to YouTube...")
+                    typer.echo("Uploading thumbnail to YouTube...")
 
                 youtube_instance.thumbnails().set(
                     videoId=video_id,
@@ -271,16 +272,16 @@ class UploadAPI:
                 ).execute()
 
                 if self.__verbose__:
-                    print("Thumbnail uploaded to YouTube.")
+                    typer.echo("Thumbnail uploaded to YouTube.")
 
             try:
                 youtube_instance = self.authenticated_service
                 initialize_upload(youtube_instance)
                 insert_thumbnail(youtube_instance)
                 if self.__verbose__:
-                    print("Video uploaded to YouTube.")
+                    typer.echo("Video uploaded to YouTube.")
             except Exception as e:
-                print(e)
+                typer.echo(e)
                 error = True
 
         if instagram:
@@ -299,7 +300,9 @@ class UploadAPI:
                     driver, timeout=5, poll_frequency=0.2, ignored_exceptions=errors
                 )
             except NoSuchDriverException as e:
-                print("Please install the Chrome WebDriver to upload to Instagram.")
+                typer.echo(
+                    "Please install the Chrome WebDriver to upload to Instagram."
+                )
                 raise e
 
             def wait_for_element(selector: tuple[str, str]):
@@ -423,12 +426,12 @@ class UploadAPI:
                     )
                 except Exception as e:
                     if self.__verbose__:
-                        print("Uploaded to Instagram.")
+                        typer.echo("Uploaded to Instagram.")
                     driver.quit()
                     del wait
                     del driver
             except Exception as e:
-                print(e)
+                typer.echo(e)
                 error = True
 
         if tiktok:
@@ -447,7 +450,7 @@ class UploadAPI:
                     driver, timeout=5, poll_frequency=0.2, ignored_exceptions=errors
                 )
             except NoSuchDriverException as e:
-                print("Please install the Chrome WebDriver to upload to TikTok.")
+                typer.echo("Please install the Chrome WebDriver to upload to TikTok.")
                 raise e
 
             def wait_for_element(selector: tuple[str, str]):
@@ -529,13 +532,17 @@ class UploadAPI:
                 )
                 time.sleep(5)
                 if self.__verbose__:
-                    print("Uploaded to TikTok.")
+                    typer.echo("Uploaded to TikTok.")
                 driver.quit()
             except Exception as e:
-                print(e)
+                typer.echo(e)
                 error = True
 
         if self.__verbose__:
-            print("Upload complete.") if not error else print("Upload failed.")
+            (
+                typer.echo("Upload complete.")
+                if not error
+                else typer.echo("Upload failed.")
+            )
 
         return not error

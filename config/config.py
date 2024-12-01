@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Iterable
 
 import ffmpeg
+import typer
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -36,7 +37,7 @@ def quit_function(
     exit_code: int | None = 1,
 ):
     # print to stderr, unbuffered in Python 2.
-    print(
+    typer.echo(
         "Function '{0}' took too long to finish. Aborting...".format(fn_name),
         file=sys.stderr,
     )
@@ -265,8 +266,11 @@ class SettingsManager:
         atexit.register(__save_session_id__)
 
     def get_metadata(self, video_path: str, verbose: bool = False) -> dict[str, str]:
+        if not os.path.isfile(video_path):
+            raise FileNotFoundError(f"Video file not found: {video_path}")
+
         if verbose:
-            print("Getting metadata...")
+            typer.echo("Getting metadata...")
 
         p = ffmpeg.probe(video_path)
         metadata = p.get("format", {}).get("tags", {})
@@ -275,11 +279,11 @@ class SettingsManager:
             raise ValueError("Metadata not found!")
 
         if verbose:
-            print(f"Metadata: {json.dumps(metadata, indent=4)}")
+            typer.echo(f"Metadata: {json.dumps(metadata, indent=4)}")
 
         return json.loads(json.dumps(metadata))
 
-    def get_video_path(self, session_id: str) -> str:
+    def get_video_path(self, session_id: str, quiet: bool = False) -> str | None:
         def file_filter(file) -> bool:
             if not os.path.isfile(file) or not file.endswith(".mp4"):
                 return False
@@ -297,12 +301,15 @@ class SettingsManager:
                     os.listdir(self.output_dir),
                 )
             )[0]
+            return os.path.join(
+                self.output_dir,
+                file,
+            )
         except IndexError:
-            raise FileNotFoundError(f"No video found for session {session_id}!")
-        return os.path.join(
-            self.output_dir,
-            file,
-        )
+            if not quiet:
+                raise FileNotFoundError(f"No video found for session {session_id}!")
+            else:
+                return None
 
     def session_exists(self, session_id: SessionID) -> bool:
         if session_id == SessionID.LAST:
@@ -359,7 +366,7 @@ class SettingsManager:
         try:
             shutil.rmtree(self.build_dir)
             if self.__verbose__:
-                print(f"Directory '{self.build_dir}' cleaned")
+                typer.echo(f"Directory '{self.build_dir}' cleaned")
         except FileNotFoundError:
             rprint(f"[red]Error[/red]: Directory '{self.build_dir}' not found")
         os.makedirs(self.build_dir, exist_ok=True)

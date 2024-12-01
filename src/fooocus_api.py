@@ -8,12 +8,11 @@ from enum import Enum
 
 import gradio_client as gc
 import PIL.Image as Image
+import typer
 from rich import print as rprint
 
-from config.config import (SessionID, SettingsManager, Singleton,
-                           classproperty, timeout)
-from src.errors import (FooocusNotFoundError, LoRaNotFoundError,
-                        ModelNotFoundError)
+from config.config import SessionID, SettingsManager, Singleton, classproperty, timeout
+from src.errors import FooocusNotFoundError, LoRaNotFoundError, ModelNotFoundError
 
 
 class Model:
@@ -150,11 +149,13 @@ class Resolution(Enum):
 
     def __str__(self) -> str:
         return f"{self.value[0][0]}×{self.value[0][1]} | {self.value[1][0]}:{self.value[1][1]}"
-    
+
+
 class ImageType(Enum):
     JPEG = "jpeg"
     PNG = "png"
     WEBP = "webp"
+
 
 @Singleton
 class FooocusAPI:
@@ -275,7 +276,7 @@ class FooocusAPI:
         for line in self.fooocus_logs:
             if "App started successful" in line:
                 if self.__verbose__:
-                    print("Fooocus has started successfully!")
+                    typer.echo("Fooocus has started successfully!")
                 break
 
     @property
@@ -299,13 +300,13 @@ class FooocusAPI:
 
     def view_endpoints(self) -> None:
         if self.__verbose__:
-            print("Gathering Fooocus endpoints...")
+            typer.echo("Gathering Fooocus endpoints...")
         self.__client__.view_api(all_endpoints=True)
 
     def __dispose__(self, exit_code: int | None = 0) -> None:
         if self.__process__:
             if self.__verbose__:
-                print("Terminating Fooocus process...")
+                typer.echo("Terminating Fooocus process...")
 
             self.__process__.terminate()
 
@@ -313,13 +314,15 @@ class FooocusAPI:
                 self.__process__.wait(timeout=5)
             except sp.TimeoutExpired:
                 if self.__verbose__:
-                    print("Fooocus did not terminate in time, killing it...")
+                    typer.echo("Fooocus did not terminate in time, killing it...")
 
                 self.__process__.kill()
 
             if self.__process__.poll() is None:
                 if self.__verbose__:
-                    print("Fooocus process is still running, forcefully killing it...")
+                    typer.echo(
+                        "Fooocus process is still running, forcefully killing it..."
+                    )
                 self.__process__.kill()
 
             if self.__process__.stdout:
@@ -330,7 +333,7 @@ class FooocusAPI:
             self.__process__ = None
 
             if self.__verbose__:
-                print("Fooocus process terminated and resources cleaned up.")
+                typer.echo("Fooocus process terminated and resources cleaned up.")
 
         if exit_code is not None:
             sys.exit(exit_code)
@@ -346,7 +349,9 @@ class FooocusAPI:
             return None
 
         if self.__verbose__:
-            print(f"Clipping picture to {str(resolution).split("|")[0].strip()} resolution...")
+            typer.echo(
+                f"Clipping picture to {str(resolution).split("|")[0].strip()} resolution..."
+            )
 
         img = Image.open(picture)
         width, height = img.size
@@ -363,16 +368,16 @@ class FooocusAPI:
         img = img.crop((left, top, right, bottom))
 
         if self.__verbose__:
-            print("Picture clipped!")
-        
+            typer.echo("Picture clipped!")
+
         if save_picture:
             if not save_picture.endswith(f".{image_type.value}"):
                 save_picture += f".{image_type.value}"
             img.save(os.path.join(self.output_dir, save_picture), image_type.value)
             if self.__verbose__:
-                print(f"Picture saved as: {save_picture}")
+                typer.echo(f"Picture saved as: {save_picture}")
             return os.path.join(self.output_dir, save_picture)
-        
+
         return img
 
     def generate_picture(
@@ -387,7 +392,7 @@ class FooocusAPI:
         save_picture: str | None = None,
     ) -> bool | str:
         if self.__verbose__:
-            print(f"Setting Fooocus params...")
+            typer.echo(f"Setting Fooocus params...")
         self.__client__.predict(True, fn_index=53)  # Advanced: True
         self.__client__.predict(fn_index=65)  # ???
         self.__client__.predict(True, "0", fn_index=66)  # Random: True, Seed: 0
@@ -555,11 +560,11 @@ class FooocusAPI:
             fn_index=67,
         )
         if self.__verbose__:
-            print("Generating picture...")
+            typer.echo("Generating picture...")
         result = self.__client__.predict(fn_index=68)[3]["value"]  # Generate picture
         result = result[0] if upscale_mode == UpscaleMode.DISABLED else result[1]
         if self.__verbose__:
-            print(f"Picture generated! Result: {result}")
+            typer.echo(f"Picture generated! Result: {result}")
         for i in range(69, 73):
             self.__client__.predict(fn_index=i)  # ???
         if not result["is_file"]:
@@ -574,7 +579,7 @@ class FooocusAPI:
                 os.path.join(self.output_dir, save_picture),
             )
             if self.__verbose__:
-                print(f"Picture saved as: {save_picture}")
+                typer.echo(f"Picture saved as: {save_picture}")
             return os.path.join(self.output_dir, save_picture)
 
         return result["name"]

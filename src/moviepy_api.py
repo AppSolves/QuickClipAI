@@ -10,6 +10,7 @@ import ffmpeg
 import moviepy.editor as mp
 import selenium
 import selenium.webdriver
+import typer
 from moviepy.audio.fx.audio_fadeout import audio_fadeout
 from moviepy.audio.fx.volumex import volumex
 from moviepy.video.fx.crop import crop
@@ -132,7 +133,7 @@ class BensoundBackgroundMusic(BackgroundMusic):
                 driver, timeout=5, poll_frequency=0.2, ignored_exceptions=errors
             )
         except NoSuchDriverException as e:
-            print("Please install the Chrome WebDriver to use Bensound!")
+            typer.echo("Please install the Chrome WebDriver to use Bensound!")
             raise e
 
         def wait_for_element(selector: tuple[str, str]):
@@ -332,8 +333,8 @@ class MoviepyAPI:
             for index, (key, value) in enumerate(metadata.items())
         }
         if verbose:
-            print(f"Metadata: {metadata}")
-            print("Injecting metadata...")
+            typer.echo(f"Metadata: {metadata}")
+            typer.echo("Injecting metadata...")
 
         temp_video_path = os.path.join(self.build_dir, "temp_video.mp4")
         ffmpeg.input(video_path).output(
@@ -350,7 +351,7 @@ class MoviepyAPI:
 
         shutil.move(temp_video_path, video_path)
         if verbose:
-            print("Metadata injected!")
+            typer.echo("Metadata injected!")
 
     def generate_video(
         self,
@@ -371,7 +372,7 @@ class MoviepyAPI:
         num_threads: int = 4,
     ) -> str:
         if self.__verbose__:
-            print("Generating video...")
+            typer.echo("Generating video...")
 
         def picture_motion(
             picture: mp.ImageClip,
@@ -478,7 +479,7 @@ class MoviepyAPI:
                 y_center=video.h / 2,
             )
         if self.__verbose__:
-            print("Video generated! Saving video...")
+            typer.echo("Video generated! Saving video...")
         os.makedirs(self.output_dir, exist_ok=True)
         file_title = metadata["title"].translate(str.maketrans("", "", '/\\:*?"<>|'))  # type: ignore
         temp_video_path = os.path.join(
@@ -508,7 +509,7 @@ class MoviepyAPI:
 
         if subtitle_options is not None:
             if self.__verbose__:
-                print("Adding captions to video...")
+                typer.echo("Adding captions to video...")
             captametropolis.add_captions(
                 temp_video_path,
                 final_video_path,
@@ -576,7 +577,7 @@ class MoviepyAPI:
         self.inject_metadata(final_video_path, metadata, verbose=self.__verbose__)
 
         if self.__verbose__:
-            print(
+            typer.echo(
                 f"{'Captions added! ' if subtitle_options is not None else ''}Final video saved as: {final_video_path}"
             )
 
