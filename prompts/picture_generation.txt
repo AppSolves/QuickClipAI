@@ -6,3 +6,4 @@ Give me the image generation prompts as pure text with no styling, etc. (I don't
 The pictures must be ultra-realistic and very detailed so they appear indistinguishable from real images. Adjust the prompts accordingly.
 Make sure the images are family-friendly, suitable for all audiences, and avoid generating any sexual, violent, or inappropriate content. If the content could be sensitive, ensure it is treated tastefully and respectfully or censored if necessary.
 Again, DON'T generate the images themselves, only the text prompts for each image, which will be used in a separate image generation tool.
+And also, it is ESSENTIAL that the image generation prompts fit the content of the voice-over and match the context of the video to ensure a coherent visual representation of the narrative - this is the most important aspect of this task.

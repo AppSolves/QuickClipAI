@@ -167,7 +167,7 @@ def generate(
         verbose=is_verbose,
     )
     typer.echo(f"Session UID: {settings_manager.session_id}")
-    g4f_api = G4FAPI(verbose=is_verbose)
+    g4f_api = G4FAPI(verbose=is_verbose, model="gpt-4o-mini")
     elevenlabs_api = ElevenLabsAPI(verbose=is_verbose)
     fooocus_api = FooocusAPI(verbose=is_verbose)
     prompt_manager = PromptManager()
@@ -405,7 +405,7 @@ def regenerate(
                         voiceover += segment["text"] + "\n"  # type: ignore
 
         voiceover = voiceover.strip().replace("*", "")
-        g4f_api = G4FAPI(verbose=is_verbose)
+        g4f_api = G4FAPI(verbose=is_verbose, model="gpt-4o-mini")
         prompt_manager = PromptManager()
         g4f_api.add_message(
             Message(MessageSender.USER, prompt_manager.get_prompt("video_idea")),
