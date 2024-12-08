@@ -339,6 +339,17 @@ def regenerate(
             rich_help_panel="Options: Customization",
         ),
     ] = 28,
+    voice_id: Annotated[
+        Optional[str],
+        typer.Option(
+            ...,
+            "--voice-id",
+            "-vid",
+            help="Specify the [purple]voice ID[/purple] to use for the voiceover (only applies when the audios weren't generated in the first place). :microphone:",
+            show_default=False,
+            rich_help_panel="Options: Customization",
+        ),
+    ] = None,
     num_threads: Annotated[
         int,
         typer.Option(
@@ -498,7 +509,7 @@ def regenerate(
                 typer.echo(f"{index + 1}. {paragraph}")
             elevenlabs_api.generate_audio(
                 paragraph,
-                voice_id=None,
+                voice_id=voice_id,
                 save_audio=str(index),
             )
 
