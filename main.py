@@ -485,6 +485,23 @@ def regenerate(
             )
         )
 
+    if not os.listdir(elevenlabs_api.output_dir):
+        with open(
+            os.path.join(settings_manager.build_dir, "responses", "voiceover.txt"),
+            "r",
+            encoding="utf-8",
+        ) as f:
+            voiceover = "\n".join([line for line in f.readlines() if line.strip()])
+        voiceover = voiceover.strip().replace("*", "")
+        for index, paragraph in enumerate(voiceover.split("\n")):
+            if is_verbose:
+                typer.echo(f"{index + 1}. {paragraph}")
+            elevenlabs_api.generate_audio(
+                paragraph,
+                voice_id=None,
+                save_audio=str(index),
+            )
+
     background_musics = [
         lambda: BackgroundMusic(
             r"D:\Hobbys\YouTube\CurioBurstz\Assets\background_music_1.mp3",
