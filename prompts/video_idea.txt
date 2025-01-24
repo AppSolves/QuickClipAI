@@ -16,6 +16,7 @@ Choose topics from a variety of fields like science, history, technology, nature
 Don't forget to NOT stylize the text in any way. Just plain text. No need to add any extra information, instructions or things like asterisks. Just the pure voice-over text for the video.
 ALWAYS Avoid duplicating topics covered in previous videos. Choose topics that people wonder about or get shocked by and things they don't already know (e.g. If there are many videos about "Why we yawn" already, don't choose that topic).
 NOTE: Sometimes, you choose the same topic over and over again. This is NOT allowed and you MUST choose a new topic every time. Make sure to check the previous videos to avoid duplication.
+You SHOULD search the internet for the topic you are about to choose to make sure it is niche and not covered by other content creators. If you find similar topics, choose another one. This is to ensure the content creator's videos are unique and engaging for the audience.
 Here are the titles/topics of previous videos you MUST AVOID:
 
 {topics}

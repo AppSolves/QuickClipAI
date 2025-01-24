@@ -306,11 +306,18 @@ class UploadAPI:
                 raise e
 
             def wait_for_element(selector: tuple[str, str]):
-                wait.until(EC.presence_of_element_located(selector))
+                try:
+                    wait.until(EC.presence_of_element_located(selector))
+                except:
+                    typer.echo(f"Element not found: {selector}")
                 return driver.find_element(*selector)
 
             def click_element(selector: tuple[str, str]):
-                wait_for_element(selector).click()
+                element = wait_for_element(selector)
+                try:
+                    element.click()
+                except:
+                    driver.execute_script("arguments[0].click();", element)
 
             def send_keys(selector: tuple[str, str], *keys: str):
                 wait_for_element(selector).send_keys(*keys)
@@ -454,11 +461,18 @@ class UploadAPI:
                 raise e
 
             def wait_for_element(selector: tuple[str, str]):
-                wait.until(EC.presence_of_element_located(selector))
+                try:
+                    wait.until(EC.presence_of_element_located(selector))
+                except:
+                    typer.echo(f"Element not found: {selector}")
                 return driver.find_element(*selector)
 
             def click_element(selector: tuple[str, str]):
-                wait_for_element(selector).click()
+                element = wait_for_element(selector)
+                try:
+                    element.click()
+                except:
+                    driver.execute_script("arguments[0].click();", element)
 
             def send_keys(selector: tuple[str, str], *keys: str):
                 wait_for_element(selector).send_keys(*keys)
@@ -488,10 +502,10 @@ class UploadAPI:
                 click_element(
                     (
                         By.XPATH,
-                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[2]/div/div',
+                        '//*[@id="root"]/div/div/div[2]/div[2]/div/div/div/div[3]/div[1]/div[2]/div[2]/div/div',
                     )
                 )
-                click_element((By.XPATH, '//*[@id=":r16:"]/div/div[1]/div[2]'))
+                click_element((By.XPATH, "/html/body/div[7]/div/div/div/div[1]/div[2]"))
                 (
                     send_keys(
                         (By.XPATH, "//input[@type='file']"),
@@ -502,32 +516,62 @@ class UploadAPI:
                 )
                 time.sleep(1)
                 click_element(
-                    (By.XPATH, '//*[@id=":r16:"]/div/div[3]/div[3]/button[2]')
+                    (By.XPATH, "/html/body/div[7]/div/div/div/div[3]/div[3]/button[2]")
                 )
                 click_element(
                     (
                         By.XPATH,
-                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[7]/div[1]',
+                        '//*[@id="root"]/div/div/div[2]/div[2]/div/div/div/div[3]/div[1]/div[4]/div[3]/div',
                     )
                 )
-                if is_selected((By.XPATH, '//*[@id=":r1l:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1l:"]'))
-                if is_selected((By.XPATH, '//*[@id=":r1m:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1m:"]'))
-                if not is_selected((By.XPATH, '//*[@id=":r1t:"]')):
-                    click_element((By.XPATH, '//*[@id=":r1t:"]'))
+                if is_selected(
+                    (
+                        By.XPATH,
+                        "/html/body/div[1]/div/div/div[2]/div[2]/div/div/div/div[3]/div[1]/div[4]/div[1]/div[3]/div[1]/div[2]/div[2]/label/div/input",
+                    )
+                ):
+                    click_element(
+                        (
+                            By.XPATH,
+                            "/html/body/div[1]/div/div/div[2]/div[2]/div/div/div/div[3]/div[1]/div[4]/div[1]/div[3]/div[1]/div[2]/div[2]/label/div/input",
+                        )
+                    )
+                if is_selected(
+                    (
+                        By.XPATH,
+                        "/html/body/div[1]/div/div/div[2]/div[2]/div/div/div/div[3]/div[1]/div[4]/div[1]/div[3]/div[1]/div[2]/div[3]/label/div/input",
+                    )
+                ):
+                    click_element(
+                        (
+                            By.XPATH,
+                            "/html/body/div[1]/div/div/div[2]/div[2]/div/div/div/div[3]/div[1]/div[4]/div[1]/div[3]/div[1]/div[2]/div[3]/label/div/input",
+                        )
+                    )
+                if not is_selected(
+                    (
+                        By.XPATH,
+                        "/html/body/div[1]/div/div/div[2]/div[2]/div/div/div/div[3]/div[1]/div[4]/div[1]/div[3]/div[3]/div/div/div/div/input",
+                    )
+                ):
+                    click_element(
+                        (
+                            By.XPATH,
+                            "/html/body/div[1]/div/div/div[2]/div[2]/div/div/div/div[3]/div[1]/div[4]/div[1]/div[3]/div[3]/div/div/div/div/input",
+                        )
+                    )
 
                 wait_until(
                     (
                         By.XPATH,
-                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[1]/div[3]/div',
+                        '//*[@id="root"]/div/div/div[2]/div[2]/div/div/div/div[1]/div/div[3]',
                     ),
-                    lambda span: span.text == "100%",
+                    lambda element: "width: 100%;" in element.get_attribute("style"),
                 )
                 click_element(
                     (
                         By.XPATH,
-                        '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[9]/button[1]',
+                        '//*[@id="root"]/div/div/div[2]/div[2]/div/div/div/div[4]/div/button[1]',
                     )
                 )
                 time.sleep(5)

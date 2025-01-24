@@ -181,7 +181,7 @@ class Session:
             if not probe:
                 return False
 
-            return probe["format"]["tags"]["episode_id"] == session_id
+            return probe["format"]["tags"].get("episode_id") == session_id
 
         try:
             file = tuple(
@@ -292,7 +292,7 @@ class SettingsManager:
             if not probe:
                 return False
 
-            return probe["format"]["tags"]["episode_id"] == session_id
+            return probe["format"]["tags"].get("episode_id") == session_id
 
         try:
             file = tuple(
