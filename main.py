@@ -180,7 +180,11 @@ def generate(
     video_text_paragraphs = tuple(
         map(
             str.strip,
-            [pg.replace("*", "") for pg in video_text_paragraphs.split("\n") if pg],
+            [
+                pg.replace("*", "")
+                for pg in video_text_paragraphs.split("\n")
+                if pg and not pg[0].isdigit()
+            ],
         )
     )
 
@@ -373,7 +377,7 @@ def regenerate(
     typer.echo(f"Session UID: {settings_manager.session_id}")
     elevenlabs_api = ElevenLabsAPI(verbose=is_verbose)
     fooocus_api = FooocusAPI(verbose=is_verbose)
-    moviepy_api = MoviepyAPI(verbose=is_verbose)  #
+    moviepy_api = MoviepyAPI(verbose=is_verbose)
 
     video_path = settings_manager.get_video_path(
         settings_manager.session_id, quiet=True
@@ -395,7 +399,13 @@ def regenerate(
                 "r",
                 encoding="utf-8",
             ) as f:
-                voiceover = "\n".join([line for line in f.readlines() if line.strip()])
+                voiceover = "\n".join(
+                    [
+                        line.strip()
+                        for line in f.readlines()
+                        if line and not line[0].isdigit()
+                    ]
+                )
         except FileNotFoundError:
             if not os.listdir(elevenlabs_api.output_dir):
                 typer.echo("No voiceover found.")
@@ -502,7 +512,13 @@ def regenerate(
             "r",
             encoding="utf-8",
         ) as f:
-            voiceover = "\n".join([line for line in f.readlines() if line.strip()])
+            voiceover = "\n".join(
+                [
+                    line.strip()
+                    for line in f.readlines()
+                    if line and not line[0].isdigit()
+                ]
+            )
         voiceover = voiceover.strip().replace("*", "")
         for index, paragraph in enumerate(voiceover.split("\n")):
             if is_verbose:
